@@ -2,15 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { checkUserText, checkName, cleanLore, coinbaseCandidates, opReturnCandidates, hexToText } from '../../lib/rules.js';
-import { encode, decode, isPubkey } from '../../lib/base58.js';
 import { nextWeeklyClose } from '../../lib/app.js';
-
-test('base58 round trips and rejects junk', () => {
-  for (let i = 0; i < 50; i++) { const b = crypto.randomBytes(32); assert.deepEqual(Buffer.from(decode(encode(b))), b); }
-  assert.deepEqual([...decode(encode(Uint8Array.of(0, 0, 1)))], [0, 0, 1]);
-  assert.ok(isPubkey('42cXQvAAr7hcPBPWAS4ocVtDyeJ4Fa6gRR2uG4gppump'));
-  assert.ok(!isPubkey('not a key')); assert.ok(!isPubkey(''));
-});
 
 test('chat text: blocks doxing, links and addresses; allows normal talk, swearing included', () => {
   assert.equal(checkUserText('gm herd, fog is thick tonight'), null);

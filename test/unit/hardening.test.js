@@ -88,7 +88,9 @@ test('when 500 notes are open, a new anonymous note is refused: nothing a flood 
   app.db.raw.exec(`INSERT INTO reports(kind,target,uid,reason,created_at) ${Array.from({ length: 500 }, (_, i) => `SELECT 'problem','help',NULL,'flood ${i}',${t + i}`).join(' UNION ALL ')}`);
   assert.equal(open(), 500);
   const r = await note('the newest note', '203.0.113.50');
-  assert.equal(r.status, 429); assert.match(r.error, /inbox is full/i);
+  // the same answer as any other limit: a visitor must not learn from the refusal whether the admin has been clearing notes
+  assert.deepEqual(r, { status: 429, error: 'Slow down a little.' });
+  assert.ok(!/inbox is full/i.test(fs.readFileSync(path.join(ROOT, 'lib/app.js'), 'utf8')), 'no wording about the inbox');
   assert.equal(open(), 500, 'the inbox does not grow');
   assert.ok(app.db.get("SELECT 1 FROM reports WHERE reason='flood 0'") && !app.db.get("SELECT 1 FROM reports WHERE reason='the newest note'"), 'the oldest note stays, the new one was not stored');
   app.db.run("DELETE FROM reports WHERE kind='problem'");
@@ -157,6 +159,9 @@ test('CSP: img-src allows self and data: only (no blob:); nothing in the page sc
   const res = await fetch(base + '/', { headers: { host: 'localhost:3000' } }); await res.text();
   const csp = res.headers.get('content-security-policy');
   assert.match(csp, /img-src 'self' data:;/); assert.ok(!csp.includes('blob:'), csp);
+  // Trusted Types: no page code writes HTML (textContent and DOM nodes only), so every HTML sink is a hard error from now on
+  assert.ok(csp.includes("require-trusted-types-for 'script'") && csp.includes("trusted-types 'none'"), csp);
+  for (const f of ['public/js/ui.js', 'public/js/app.js', 'public/js/views.js', 'public/js/views-closed.js', 'public/js/account.js', 'admin/admin.js']) assert.ok(!/innerHTML|outerHTML|insertAdjacentHTML|document\.write|createContextualFragment/.test(fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\/\/[^\n]*/g, '')), f + ' uses an HTML sink');
   for (const f of ['public/js/ui.js', 'public/js/app.js', 'public/js/views.js', 'admin/admin.js']) assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('blob:'), f);
 });
 

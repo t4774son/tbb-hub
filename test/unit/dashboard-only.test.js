@@ -80,9 +80,8 @@ test('every former route is the plain 404 of a path that was never there: settin
         }
       }
       const st = (await client(base).call('GET', '/api/state')).json;
-      assert.deepEqual(Object.keys(st).sort(), ['alerts', 'banner', 'counts', 'features', 'genesis', 'lore', 'me', 'operator', 'rooms', 'sections', 'stats', 'story', 'voteCloses', 'x'].sort());
+      assert.deepEqual(Object.keys(st).sort(), ['alerts', 'banner', 'features', 'genesis', 'lore', 'me', 'operator', 'rooms', 'sections', 'stats', 'story', 'x'].sort());
       assert.deepEqual(st.features, label === 'open' ? { chat: true, accounts: true, ideas: true } : { chat: false, accounts: false, ideas: false });
-      assert.deepEqual(Object.keys(st.counts).sort(), ['allies', 'ideas', 'newToday']);
       assert.deepEqual(st.rooms.map((r) => Object.keys(r).sort()), [['blurb', 'id', 'name', 'short'], ['blurb', 'id', 'name', 'short']]);
       const tables = app.db.all("SELECT name FROM sqlite_master WHERE type='table'").map((r) => r.name);
       for (const t of ['nonces', j('bount', 'ies'), j('list', 'ings'), 'orders', 'used_sigs', 'reviews']) assert.ok(!tables.includes(t), 'table still there: ' + t);
@@ -133,6 +132,10 @@ test('an older database is brought over cleanly: the former tables dropped, the 
     INSERT INTO users(wallet,name,created_at,via,${j('wallet', '_addr')}) VALUES('4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT','oldtimer',1,'wallet','4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT');
     INSERT INTO messages(room,wallet,body,created_at) VALUES('general','u_keep1','still here',1);
     INSERT INTO messages(room,wallet,body,created_at) VALUES('million','u_keep1','in the old room',1);
+    INSERT INTO messages(room,wallet,body,created_at) VALUES('general','4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT','by the old account',1);
+    INSERT INTO votes(idea_id,wallet,created_at) VALUES(1,'4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT',1);
+    INSERT INTO sessions(id,wallet,created_at,expires_at) VALUES('s-old','4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT',1,9999999999999);
+    INSERT INTO mod_hits(wallet,kind,at) VALUES('4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT','link',1);
     INSERT INTO ideas(wallet,title,body,created_at,${j('bount', 'y_id')}) VALUES('u_keep1','an idea','kept',1,7);
     INSERT INTO votes(idea_id,wallet,created_at) VALUES(1,'u_keep1',1);
     INSERT INTO reports(kind,target,wallet,reason,created_at) VALUES('problem','help',NULL,'a note',1);
@@ -158,7 +161,9 @@ test('an older database is brought over cleanly: the former tables dropped, the 
       for (const t of ['users', 'sessions', 'messages', 'reactions', 'ideas', 'votes', 'reports', 'inbox', 'mod_actions', 'mod_hits', 'mod_queue']) assert.ok(cols(t).includes('uid') && !cols(t).includes('wallet'), `pass ${pass}: ${t} renamed`);
       for (const col of [j('wallet', '_addr'), 'seller', 'mc', 'mc_checked_at', 'bal_base']) assert.ok(!cols('users').includes(col), col);
       assert.ok(!cols('ideas').includes(j('bount', 'y_id')));
-      assert.deepEqual(db.all('SELECT uid, name, username, via FROM users ORDER BY uid').map((r) => ({ ...r })), [{ uid: '4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT', name: 'oldtimer', username: null, via: 'legacy' }, { uid: 'u_keep1', name: 'keeper', username: 'keeper', via: 'password' }], 'accounts kept; the former sign-in kind is only a label');
+      assert.deepEqual(db.all('SELECT uid, name, username, via FROM users ORDER BY uid').map((r) => ({ ...r })), [{ uid: 'u_keep1', name: 'keeper', username: 'keeper', via: 'password' }], 'the password account kept; the former-sign-in account, which nobody could ever sign into again and whose id was a public address, is gone with its rows');
+      for (const t of ['sessions', 'messages', 'reactions', 'ideas', 'votes', 'reports', 'inbox', 'mod_actions', 'mod_hits', 'mod_queue', 'ip_log']) assert.equal(db.get(`SELECT COUNT(*) n FROM ${t} WHERE uid LIKE '4Kgv%'`).n, 0, `pass ${pass}: ${t} keeps nothing of the deleted account`);
+      assert.ok(db.all('SELECT uid FROM users').every((r) => /^u_/.test(r.uid) && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(r.uid)), 'no account id looks like an address');
       assert.deepEqual(db.all('SELECT uid, body FROM messages ORDER BY id').map((r) => ({ ...r })), [{ uid: 'u_keep1', body: 'still here' }, { uid: 'u_keep1', body: 'in the old room' }], 'messages kept, the old room’s rows included');
       assert.deepEqual({ ...db.get('SELECT uid, title FROM ideas') }, { uid: 'u_keep1', title: 'an idea' }); assert.equal(db.get('SELECT COUNT(*) n FROM votes WHERE uid=?', 'u_keep1').n, 1);
       assert.deepEqual(db.all('SELECT kind FROM reports ORDER BY id').map((r) => r.kind), ['problem'], 'reports on former things are gone, Help notes stay');
@@ -166,10 +171,10 @@ test('an older database is brought over cleanly: the former tables dropped, the 
       assert.deepEqual(db.all('SELECT kind FROM events ORDER BY id').map((r) => r.kind), ['idea']);
       assert.deepEqual(db.all('SELECT kind FROM mod_queue ORDER BY id').map((r) => r.kind), ['held']);
       assert.equal(db.get('SELECT uid FROM mod_actions').uid, 'u_keep1');
-      assert.deepEqual(JSON.parse(db.get("SELECT v FROM settings WHERE k='areas'").v), { chat: true, accounts: true }, 'the panel switches carried over: chat as it was, accounts from the former sign-in switch');
+      assert.deepEqual(JSON.parse(db.get("SELECT v FROM settings WHERE k='areas'").v), { chat: false, accounts: false }, 'the panel switches are closed after the move: opening is a fresh panel action, whatever the former switches said');
       assert.equal(db.get("SELECT v FROM settings WHERE k=?", j('post_min', '_tbb')), undefined);
       assert.equal(db.get("SELECT v FROM settings WHERE k='story_title'").v, '"Kept"');
-      assert.equal(db.get("SELECT v FROM kv WHERE k='dashboard_rev'").v, '1');
+      assert.equal(db.get("SELECT v FROM kv WHERE k='dashboard_rev'").v, '2');
       // the indexes follow the new column, and nothing of the old names stays
       const idx = db.all("SELECT name, sql FROM sqlite_master WHERE type='index' AND sql IS NOT NULL").map((r) => r.name + ' ' + r.sql);
       assert.ok(!idx.some((s) => /wallet/.test(s)), 'no index names the old column: ' + idx.filter((s) => /wallet/.test(s)).join(' | '));

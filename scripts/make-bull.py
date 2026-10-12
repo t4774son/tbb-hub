@@ -144,8 +144,9 @@ head.append('<g class="bh-eyes">' + ''.join(glow(x, y, k) for (x, y), k in EYES)
 svg_wide = f'<svg class="bull-head bull-wide" viewBox="800 80 220 240" aria-hidden="true" focusable="false">\n{DEFS}\n' + '\n'.join(head) + '\n</svg>'
 # phones: the tall painting's bull already faces the viewer; only its eyes light up (viewBox = the head, in tall pixels)
 TB = (380, 260, 100, 100)
+# (its gradient gets its own id: two inline SVGs on one page share the document's id space)
 svg_tall = (f'<svg class="bull-head bull-tall" viewBox="{TB[0]} {TB[1]} {TB[2]} {TB[3]}" aria-hidden="true" focusable="false">\n<defs>{GLOW}</defs>\n'
-            f'<g class="bh-head"><g class="bh-eyes">{glow(415, 311, 0.78)}{glow(432, 310, 0.5)}</g></g>\n</svg>')
+            f'<g class="bh-head"><g class="bh-eyes">{glow(415, 311, 0.78)}{glow(432, 310, 0.5)}</g></g>\n</svg>').replace('id="eyeGlow"', 'id="eyeGlowTall"').replace('url(#eyeGlow)', 'url(#eyeGlowTall)')
 # phones: the page's vignette sits on the tall bull, so a warm light layer lifts the bull's own values and rims its
 # outline. The silhouette is traced from the tall painting (tall pixels); the layer is screen-blended (CSS) so only the bull
 # brightens and the painting around it stays as painted. Soft edges: the fill is blurred, the rim is a blurred stroke that

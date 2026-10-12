@@ -35,7 +35,7 @@ an area underneath them. Set `CHAT_OPEN=1 ACCOUNTS_OPEN=1` to see everything.
 
 ```bash
 npm test                  # unit + API tests: real HTTP, mocked chain, the admin host with a local RSA key, the story
-                          # parser, the zero-link detector (188 link/obfuscation cases), the scam filter, moderation end
+                          # parser, the zero-link detector (every link shape and disguise), the scam filter, moderation end
                           # to end, accounts (scrypt, rules, proof of work, throttling, recovery, slow start), IP hashing
                           # and bans, Sign in with X against a fake X server, the launch surface route by route, the
                           # dashboard-only guard (no wallet or commerce code, former routes 404, the database brought
@@ -80,8 +80,7 @@ above shows the latest result.
 | `LORE_WORKER` | `off` stops the block chain message scanner. | Optional |
 | `CHAT_OPEN` | `1` *allows* chat (Main, Crypto Builds); it is then opened from the admin panel; default closed. | Launch ceiling |
 | `ACCOUNTS_OPEN` | `1` allows accounts: sign-up / sign-in and everything that needs an account (ideas, votes, inbox); opened from the panel ("Accounts & sign-in"). | Launch ceiling |
-| `STAKING_PROGRAM` | stakethebull.xyz program; total staked is read from its public pool account. Leave as is. | Data |
-| `OPERATOR_NAME` | Company name shown small at the bottom. Empty = "LLC coming soon". | Optional |
+| `OPERATOR_NAME` | Company name shown small at the bottom. Empty = "community-made page". | Optional |
 | `ADMIN_HOST` | Hostname of the private admin panel (e.g. `admin.example.com`), behind Cloudflare Access. Empty = none. | Optional |
 | `ACCESS_TEAM`, `ADMIN_ACCESS_AUD`, `ADMIN_EMAIL_SHA256` | Cloudflare Access team, application audience tag, and sha256 of the admin's lowercase e-mail. All three are required for the admin host to answer at all. | With `ADMIN_HOST` |
 
@@ -102,7 +101,7 @@ public host none of this exists: there is no admin account or role, and no membe
 ```
 server.js            entry (loads .env, binds 127.0.0.1)
 lib/app.js           routes, sessions, chat, ideas, the live stream; `ops` for the panel (hide a reported idea)
-lib/solana.js        read-only: the staking pool's derived address, JSON-RPC with backoff
+lib/solana.js        read-only: the mint, the staking program and its pool address, JSON-RPC with backoff
 lib/auth.js          accounts: scrypt hashes, username/password rules, recovery codes, sign-in throttle, sign-up proof of work
 lib/common-passwords.js  the most common long passwords (local list)
 lib/xauth.js         Sign in with X: OAuth 2.0 code + PKCE, one paid call per sign-in, daily cap, off until configured

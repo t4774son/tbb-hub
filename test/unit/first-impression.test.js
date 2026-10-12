@@ -149,7 +149,7 @@ test('the home says what it is: the kicker line, a title that says what the site
 // ---- 8 + 9. numbers already fetched, and a share line
 test('numbers already fetched are shown: BTC price in /api/state for the sats line, market cap, 7-day staked trend, Season prize/APR from the board; a share button with the clipboard fallback', async () => {
   const st = (await raw('GET', '/api/state')).json;
-  assert.ok('btcUsd' in st.stats, 'the BTC price (already fetched for /api/prices) rides along in /api/state');
+  assert.ok('btcUsd' in st.stats, 'the BTC price (already fetched for the sats line) rides along in /api/state');
   const html = (await raw('GET', '/')).text; const app = read('public/js/app.js'); const views = read('public/js/views.js');
   assert.ok(/id="st-sub"/.test(html) && /sats/.test(app) && /marketCap/.test(app), 'a sats + market cap line under the price');
   assert.ok(/change7d/.test(read('lib/feeds.js')) && /change7d/.test(app) && /7d/.test(app), 'the 7-day staked trend');
@@ -209,6 +209,9 @@ test('web app manifest + icons: same-origin, PNG icons at the stated sizes, link
     const r = await raw('GET', ic.src); assert.equal(r.status, 200, ic.src); assert.match(String(r.headers['content-type']), /^image\/png/);
     const [w, h] = ic.sizes.split('x').map(Number); assert.deepEqual(pngSize(r.buf), { w, h }, ic.src + ' is ' + ic.sizes);
     assert.ok(!/tEXt|iTXt|zTXt|eXIf/.test(r.buf.toString('latin1')), ic.src + ': no text or EXIF chunk');
+    // truecolor RGB, 8 bits, no palette (lossless as made from the art) and compressed as small as that allows
+    assert.deepEqual([r.buf[24], r.buf[25]], [8, 2], ic.src + ': 8-bit RGB, no palette reduction'); assert.ok(!r.buf.toString('latin1').includes('PLTE'), ic.src + ': no PLTE chunk');
+    assert.ok(r.buf.length <= { 192: 64_000, 512: 340_000 }[w], `${ic.src}: ${r.buf.length} bytes`);
   }
   assert.ok(/<link rel="apple-touch-icon" href="\/img\/icon-192\.[0-9a-f]{10}\.png">/.test(html), 'apple-touch-icon');
   assert.ok(!Object.keys(man).some((k) => /serviceworker|service_worker/i.test(k)), 'no service worker in the manifest');

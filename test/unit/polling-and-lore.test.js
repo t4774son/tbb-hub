@@ -56,7 +56,6 @@ test('GET /api/lore?n= returns a batch of distinct approved lines, capped at 30;
   assert.ok(i >= 0 && batch[i + 1]?.height === 5005, 'the reply follows its line in the batch: ' + JSON.stringify(batch.slice(i, i + 2)));
   const old = await (await fetch(base + '/api/lore')).json();
   assert.ok(old.lore && typeof old.lore.text === 'string' && !old.lines && old.count === 42, 'no n: one line and the count, as before');
-  const follow = await (await fetch(base + '/api/lore?follow=5000')).json(); assert.equal(follow.lore.height, 5005, 'follow still works');
 });
 
 test('lore table: an index on (status, height); the approved count is cached and refreshed on insert/approve; pick() probes rowids instead of ORDER BY RANDOM()', async () => {
@@ -92,7 +91,7 @@ test('lore prune(): pending rows older than 30 days go, approved rows are capped
   assert.ok(approved.some((r) => r.height === 0) && approved.some((r) => r.height === 139792), 'genesis and the landmark survive the cap');
   assert.equal(approved.length, 12, '10 newest + genesis + landmark: ' + approved.length);
   assert.equal(lore.count(), 12, 'the cached count follows');
-  assert.ok(/const housekeeping = \(\) => \{[^\n]*feeds\.lore\.prune\(\)/.test(src('lib/app.js')) && /setInterval\(housekeeping, 6 \* 3600_000\)/.test(src('lib/app.js')) && /housekeeping\(\); resolve\(server\.address\(\)\)/.test(src('lib/app.js')), 'the app prunes at start and on a timer');
+  assert.ok(/const housekeeping = \(\) => \{[\s\S]{0,600}?feeds\.lore\.prune\(\)/.test(src('lib/app.js')) && /setInterval\(housekeeping, 6 \* 3600_000\)/.test(src('lib/app.js')) && /housekeeping\(\); resolve\(server\.address\(\)\)/.test(src('lib/app.js')), 'the app prunes at start and on a timer');
   delete app.config.loreCap;
 });
 

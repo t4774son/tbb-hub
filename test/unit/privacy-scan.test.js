@@ -212,3 +212,17 @@ test('privacy scan: gzip and zlib streams are unpacked whatever the file is call
   const fine = scanWord({ 'public/fonts/z.woff': woff(Buffer.from('<metadata><credit name="Nobody"/></metadata>'), null) });
   assert.equal(fine.code, 0, fine.out);
 });
+
+test('privacy scan: a WOFF font’s head.created / head.modified are decoded and reported (a warning, not a failure); the scanner’s own example offsets are neutral', () => {
+  // a WOFF with one table, 'head', stored uncompressed (compLength == origLength); created/modified at 20 and 28 are
+  // big-endian seconds since 1904-01-01
+  const since1904 = (iso) => BigInt(Math.floor((Date.parse(iso) - Date.UTC(1904, 0, 1)) / 1000));
+  const head = Buffer.alloc(54); head.writeBigUInt64BE(since1904('2025-01-09T08:45:09Z'), 20); head.writeBigUInt64BE(since1904('2021-06-30T00:00:00Z'), 28);
+  const h = Buffer.alloc(44); h.write('wOFF', 0, 'latin1'); h.writeUInt32BE(0x00010000, 4); h.writeUInt16BE(1, 12); h.writeUInt32BE(44 + 20 + head.length, 8);
+  const dirEntry = Buffer.alloc(20); dirEntry.write('head', 0, 'latin1'); dirEntry.writeUInt32BE(64, 4); dirEntry.writeUInt32BE(head.length, 8); dirEntry.writeUInt32BE(head.length, 12);
+  const r = scan({ 'public/fonts/h.woff': Buffer.concat([h, dirEntry, head]) });
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /FONT TIME\? public\/fonts\/h\.woff: head\.created=2025-01-09 08:45:09 head\.modified=2021-06-30 00:00:00/);
+  const src = fs.readFileSync(SCANNER, 'utf8');
+  assert.ok(!/[+-](?:0[1-9]|1[0-4]):?[0-5]\d\b/.test(src.split('\n').filter((l) => l.trim().startsWith('#') || /#\s/.test(l)).join('\n')), 'the scanner’s examples name no real offset');
+});

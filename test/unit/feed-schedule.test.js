@@ -15,7 +15,6 @@ let app; let base; let fetches = 0;
 const fakeFetch = async (url) => {
   fetches++; const u = String(url);
   const body = u.includes('geckoterminal') ? { data: { attributes: { ohlcv_list: Array.from({ length: 24 }, (_, i) => [1791460000 + i * 3600, 0, 0, 0, 0.008 + i / 10000, 1]) } }, meta: { base: { address: MINT } } }
-    : u.includes('So1111') ? { pairs: [{ baseToken: { symbol: 'SOL' }, quoteToken: { symbol: 'USDC' }, priceUsd: '140', liquidity: { usd: 9e9 } }] }
     : u.includes('dexscreener') ? { pairs: [{ baseToken: { address: MINT }, priceUsd: '0.008', priceChange: { h24: 1.5 }, liquidity: { usd: 1 }, marketCap: 8_000_000, pairAddress: '6unnG2hL8udPjDpu3TchvAtptu3dq8AS7tymrWDN2LLC' }] }
     : u.includes('prices') ? { USD: 98_000 } : {};
   return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -29,14 +28,14 @@ before(async () => {
 after(async () => { await app.close(); fs.rmSync(dir, { recursive: true, force: true }); });
 const get = (p, ip) => fetch(base + p, { headers: { 'x-test-ip': ip } }).then((r) => r.json());
 
-test('an observer polling /api/state sees exactly the same feed times before and after another connection loads the page (chart, state, prices): requests never refresh a feed', async () => {
+test('an observer polling /api/state sees exactly the same feed times before and after another connection loads the page (chart, state, links): requests never refresh a feed', async () => {
   const before = await get('/api/state', '203.0.113.1');
   assert.equal(before.stats.price, 0.008, 'the numbers are there');
   assert.ok(before.stats.feeds.market.at > 0 && before.stats.feeds.chart.at > 0, 'every feed was refreshed by the timer: ' + JSON.stringify(before.stats.feeds));
   const n = fetches;
   app.feeds._cache.clear(); // everything stale at once: a visitor-driven refresh would show here
   const visitor = '203.0.113.2';
-  await get('/api/chart', visitor); await get('/api/state', visitor); await get('/api/prices', visitor); await get('/api/chart', visitor);
+  await get('/api/chart', visitor); await get('/api/state', visitor); await get('/api/allies', visitor); await get('/api/chart', visitor);
   assert.equal(fetches, n, 'no outside request was made because somebody visited');
   const after = await get('/api/state', '203.0.113.1');
   assert.deepEqual(after.stats.feeds, before.stats.feeds, 'the observer learns nothing from the feed times');
@@ -54,6 +53,6 @@ test('exposed refresh times are quantised to ten seconds', async () => {
 
 test('no route calls a feed: the request path reads the cache only (lib/app.js), and the timer is the only caller', () => {
   const src = fs.readFileSync(path.join(ROOT, 'lib/app.js'), 'utf8');
-  assert.ok(!/feeds\.(market|chart|btc|solUsd|holders|staked|season)\(\)/.test(src), 'no feeds.x() call in app.js');
+  assert.ok(!/feeds\.(market|chart|btc|holders|staked|season)\(\)/.test(src), 'no feeds.x() call in app.js');
   assert.ok(/feeds\.start\(\)/.test(src) && /feeds\.stop\(\)/.test(src), 'the timer starts with the server and stops with it');
 });

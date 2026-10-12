@@ -50,14 +50,8 @@ export function clear(el, ...kids) { el.replaceChildren(); append(el, kids); ret
 const NS = 'http://www.w3.org/2000/svg';
 // Hand-drawn 24px stroke icons.
 const PATHS = {
-  home: 'M3 11 12 4l9 7M5.5 9.5V20h13V9.5M10 20v-5h4v5',
-  more: 'M5 12h.01M12 12h.01M19 12h.01',
   build: 'M14.7 6.3a4 4 0 0 0 5 5L22 9l-3-3-1.7-1.7a4 4 0 0 0-2.6 2zM14 7 3.5 17.5a2.1 2.1 0 0 0 3 3L17 10',
   inbox: 'M3 13h5l1.5 3h5L16 13h5M5.5 5h13L21 13v6H3v-6z',
-  allies: 'M9 7a3 3 0 1 0 0 .1M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16.5 4.5a3 3 0 0 1 0 5.6M18 14c1.9.8 3 2.9 3 6',
-  buy: 'M12 3v18M7 8.5C7 6.6 9.2 5.5 12 5.5s5 1.1 5 3-2.2 2.6-5 3.5-5 1.6-5 3.5 2.2 3 5 3 5-1.1 5-3',
-  stake: 'M12 3 3 7.5l9 4.5 9-4.5L12 3zM3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5',
-  calc: 'M6 3h12v18H6zM9 7h6M9 11h.01M12 11h.01M15 11h.01M9 14.5h.01M12 14.5h.01M15 14.5v3M9 18h.01M12 18h.01',
   learn: 'M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z',
   help: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01',
   chat: 'M4 5h16v11H9l-5 4z',
@@ -66,7 +60,6 @@ const PATHS = {
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 3.6-7 8-7s8 3 8 7',
   copy: 'M9 9h11v11H9zM5 15H4V4h11v1',
   check: 'M5 12.5 10 17 19 7',
-  ext: 'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5',
   close: 'M6 6l12 12M18 6 6 18',
   back: 'M15 5l-7 7 7 7',
   send: 'M4 12 20 4l-5 16-3-7z',
@@ -80,7 +73,6 @@ const PATHS = {
   up: 'M12 19V5M6 11l6-6 6 6',
   star: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z',
   shield: 'M12 3 4.5 6v6c0 4.5 3.2 7.7 7.5 9 4.3-1.3 7.5-4.5 7.5-9V6z',
-  image: 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9.5h.01',
   clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
   xlogo: 'M4 4l16 16M20 4 4 20',
   chart: 'M4 20V4M4 20h16M7 15l4-5 3 3 5-7',
@@ -132,10 +124,23 @@ export function usd(n) {
   if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
   return '$' + n.toLocaleString('en-US', { maximumFractionDigits: n < 100 ? 2 : 0, minimumFractionDigits: n < 100 ? 2 : 0 });
 }
-export const compact = (n) => { const v = Number(n); if (!Number.isFinite(v)) return '—'; const a = Math.abs(v);
-  return a >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : a >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : a >= 1e4 ? (v / 1e3).toFixed(1) + 'K' : num(v); };
+// The unit is chosen after rounding, so 999,999 reads 1.00M and nothing ever reads 1000.0K.
+export const compact = (n) => { const v = Number(n); if (!Number.isFinite(v)) return '—';
+  if (Math.abs(v) < 1e4) return num(v);
+  const k = (v / 1e3).toFixed(1); if (Math.abs(Number(k)) < 1000) return k + 'K';
+  const m = (v / 1e6).toFixed(2); if (Math.abs(Number(m)) < 1000) return m + 'M';
+  return (v / 1e9).toFixed(2) + 'B'; };
 export const num = (n, d = 0) => (n === null || n === undefined || !Number.isFinite(Number(n)) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d }));
-export function pct(n) { if (n === null || n === undefined || !Number.isFinite(n)) return '—'; return (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n).toFixed(1) + '%'; }
+export function pct(n) { if (n === null || n === undefined || !Number.isFinite(n)) return '—'; const s = Math.abs(n).toFixed(1); return (s === '0.0' ? '' : n > 0 ? '+' : '−') + s + '%'; }
+// "updated 2m ago" for a feed { at, ttl }, measured at `now` (the page passes its clock corrected to the server's, so a
+// visitor's fast or slow clock never shows every number as delayed). Older than twice the refresh interval = delayed.
+export function ageLabel(f, now = Date.now()) {
+  if (!f || !f.at) return { text: '', stale: false, title: '' };
+  const age = now - f.at; const stale = age > 2 * f.ttl;
+  const t = age < 45_000 ? 'just now' : age < 3600_000 ? `${Math.round(age / 60_000)}m ago` : age < 86400_000 ? `${Math.round(age / 3600_000)}h ago` : `${Math.round(age / 86400_000)}d ago`;
+  const every = f.ttl >= 60_000 ? `${Math.round(f.ttl / 60_000)} min` : `${Math.round(f.ttl / 1000)} s`;
+  return { text: stale ? `delayed · ${t}` : t, stale, title: `${stale ? 'Delayed: the source has not answered lately. ' : ''}Last updated ${t}; refreshes about every ${every}.` };
+}
 export function ago(t) {
   const s = Math.max(0, (Date.now() - t) / 1000);
   if (s < 45) return 'now';
@@ -149,7 +154,6 @@ export function until(t) {
   const d = Math.floor(s / 86400); const hh = Math.floor((s % 86400) / 3600); const m = Math.floor((s % 3600) / 60);
   return d ? `${d}d ${hh}h` : hh ? `${hh}h ${m}m` : `${m}m`;
 }
-export const shortAddr = (a) => (a && a.length > 10 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a || '');
 
 // Text with safe, clickable links (built as DOM nodes).
 // What users typed is shown exactly as typed: plain text, never anchors (chat is zero-link; see lib/rules.js).

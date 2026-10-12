@@ -19,7 +19,7 @@ import path from 'node:path';
 import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { createApp } from '../lib/app.js';
-import { seed } from './seed.js';
+import { seed, DEMO_IDS } from './seed.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
@@ -46,7 +46,6 @@ const fakeFetch = async (url) => {
   const u = String(url);
   const body = u.includes('/cdn-cgi/access/certs') ? { keys: [{ kid: 'kid-1', kty: 'RSA', alg: 'RS256', use: 'sig', ...RSA.publicKey.export({ format: 'jwk' }) }] }
     : u.includes('/api/board') ? { mint: MINT, season: { start: Date.now() - 5 * 86400_000, end: Date.now() + 25 * 86400_000, overtimeHours: 0, prizeTbb: 4206900, stakeApr: 0.08 }, totals: { buyers: 308, buys: 789, volumeUsd: 187421.07 }, leaderboard: [{ wallet: 'TestWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAone', score: 10044.14 }, { wallet: 'TestWa11etBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBtwo', score: 6200 }, { wallet: 'TestWa11etCCCCCCCCCCCCCCCCCCCCCCCCCCCCCthree', score: 3100.5 }] }
-    : u.includes('So1111') ? { pairs: [{ baseToken: { symbol: 'SOL' }, quoteToken: { symbol: 'USDC' }, priceUsd: '142.10', liquidity: { usd: 9e9 } }] }
     : u.includes('geckoterminal') ? { data: { attributes: { ohlcv_list: Array.from({ length: 24 }, (_, i) => [Math.floor(Date.now() / 1000) - i * 3600, 0, 0, 0, 0.0079 + Math.sin(i / 3) * 0.0002, 1]) } }, meta: { base: { address: MINT } } }
     : u.includes('dexscreener') ? { pairs: [{ baseToken: { address: MINT }, priceUsd: '0.008122', priceChange: { h24: 2.56 }, liquidity: { usd: 1 }, marketCap: 8122066, pairAddress: '6unnG2hL8udPjDpu3TchvAtptu3dq8AS7tymrWDN2LLC' }] }
     : u.includes('prices') ? { USD: 98250 } : {};
@@ -60,7 +59,7 @@ const app = createApp({ env: { PORT: String(PORT), LORE_WORKER: 'off', POW_BITS:
   ADMIN_HOST: `admin.localhost:${PORT}`, ACCESS_TEAM: TEAM, ADMIN_ACCESS_AUD: AUD, ADMIN_EMAIL_SHA256: crypto.createHash('sha256').update(ADMIN_EMAIL).digest('hex') }, rpc, fetchImpl: fakeFetch, log: () => {} });
 seed(app.db, { demo: true });
 { // a few plain chat lines for the chat shots (the seed writes no messages): the fake accounts from the demo seed
-  const W = ['DemoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1', 'DemoBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB2', 'DemoCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC3', 'DemoDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4'];
+  const W = DEMO_IDS;
   const lines = [['general', 0, 'Morning. Anyone watching the block height tonight?'], ['general', 1, 'Staked a little more this week.'], ['general', 2, 'The Season 1 board updated an hour ago.'],
     ['builds', 1, 'Working on a bot that posts the TBB price once per block. Repo once it is tidy.'], ['builds', 3, 'Drafting a holder map that shows shapes only, no addresses.'], ['general', 3, 'Staked a little more this week too.']];
   const t = Date.now();
@@ -73,7 +72,7 @@ app.settings.set('story_body', 'I did not start this to get rich. I started it b
 // Demo moderation data for the panel shots (fake accounts and names from the demo seed): a held message, a report, an
 // automatic mute, a message hidden by community reports, and a few log lines.
 {
-  const W = ['DemoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1', 'DemoBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB2', 'DemoCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC3', 'DemoDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4'];
+  const W = DEMO_IDS;
   const t = Date.now();
   app.db.run("INSERT OR IGNORE INTO users(uid,name,created_at,adult_confirmed_at,via) VALUES('DemoEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE5','tbb_helpdesk99',?,?,'legacy')", t - 2 * 3600_000, t - 2 * 3600_000);
   const held = app.db.run('INSERT INTO messages(room,uid,body,created_at) VALUES(?,?,?,?)', 'general', 'DemoEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE5', 'is there a telegram group for holders? asking for a friend', t - 9 * 60_000).lastInsertRowid;

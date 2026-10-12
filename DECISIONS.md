@@ -21,8 +21,8 @@ The choices behind the code, in the order they matter.
    published: not on the page, not in the API, not in the stream, not in the admin panel. Outside data is refreshed on
    the server's own timer, never because somebody visited, and refresh times are rounded, so no timestamp says when
    anyone else was here.
-5. **Zero runtime dependencies, no bundler.** The little Solana needed to read public chain data (base58, one derived
-   address for the staking pool, JSON-RPC) is written here. Less supply-chain risk, nothing to update, a small page.
+5. **Zero runtime dependencies, no bundler.** The little Solana needed to read public chain data (JSON-RPC with backoff;
+   the mint, the staking program and its pool account as fixed addresses) is written here. Less supply-chain risk, nothing to update, a small page.
    Node 24+ with the built-in SQLite.
 6. **Zero links in chat, text only.** Every link shape and disguise is refused server-side, as are wallet addresses,
    keys, seed phrases, phone numbers, street addresses and e-mails. A rare false positive is accepted over a missed

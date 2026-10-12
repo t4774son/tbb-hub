@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createApp, LINK_WORDING, safeUrl } from '../../lib/app.js';
 import { seed, ALLIES } from '../../scripts/seed.js';
-import { TBB_MINT, findProgramAddress } from '../../lib/solana.js';
+import { TBB_MINT, STAKING_POOL } from '../../lib/solana.js';
 import { newUid, plantUser, sessionFor } from './helpers.js';
 
 const OTHER = newUid('other'); const MAKER = newUid('maker'); const READER = newUid('reader'); const RICH = newUid('rich');
@@ -158,7 +158,6 @@ test('launch default: everything but the dashboard is "coming soon" to the publi
   assert.deepEqual((await anon.call('GET', '/api/state')).features, { chat: false, accounts: false, ideas: false });
   a.settings.set('areas', { chat: false, accounts: false });
   assert.deepEqual(st.rooms.map((r) => r.id), ['general', 'builds']);
-  assert.equal(st.counts.ideas, 0);
   assert.ok(!st.alerts.some((x) => ['idea', 'vote', 'message'].includes(x.kind)), 'no alerts for closed areas: ' + JSON.stringify(st.alerts));
   for (const p of ['/api/rooms/general/messages', '/api/ideas', '/api/inbox']) assert.equal((await anon.call('GET', p)).status, 503, p);
   // dashboard data stays open
@@ -193,10 +192,9 @@ test('links migration: an Instagram link from an older install is removed once, 
 test('staked: read from the stakethebull pool account; 24h and 7-day change from our own hourly snapshots', async () => {
   const d = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), 'tbbstake-'));
   const PROG = '4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT';
-  const [pool] = findProgramAddress([new TextEncoder().encode('pool')], PROG);
-  let staked = 52_000_000_000_000n; let prog = PROG; let asked = null;
+  let staked = 52_000_000_000_000n; let prog = PROG; let asked = null; let disc = '00';
   const srpc = async (method, params) => {
-    if (method === 'getAccountInfo') { asked = params[0]; const b = Buffer.alloc(237); b.writeBigUInt64LE(staked, 104); b.writeBigUInt64LE(169n, 120); return { value: { owner: prog, data: [b.toString('base64'), 'base64'] } }; }
+    if (method === 'getAccountInfo') { asked = params[0]; const b = Buffer.alloc(237); b.fill(Buffer.from(disc, 'hex'), 0, 8); b.writeBigUInt64LE(staked, 104); b.writeBigUInt64LE(169n, 120); return { value: { owner: prog, data: [b.toString('base64'), 'base64'] } }; }
     if (method === 'getTokenSupply') return { value: { uiAmount: 1_000_000_000 } };
     return rpc(method, params);
   };
@@ -205,10 +203,15 @@ test('staked: read from the stakethebull pool account; 24h and 7-day change from
     a.db.run('INSERT INTO staked_hist(at,amount) VALUES(?,?)', Date.now() - 24 * 3600_000, 50_000_000);
     a.db.run('INSERT INTO staked_hist(at,amount) VALUES(?,?)', Date.now() - 7 * 86400_000 - 1800_000, 40_000_000); // a week ago (within the 8 days kept)
     const s = await a.feeds.staked();
-    assert.equal(asked, pool, 'reads the pool account');
+    assert.equal(asked, STAKING_POOL, 'reads the pool account');
     assert.equal(s.amount, 52_000_000); assert.equal(s.stakes, 169); assert.equal(s.pct.toFixed(1), '5.2');
     assert.equal(s.change24h.toFixed(1), '4.0');
     assert.equal(s.change7d.toFixed(1), '30.0', 'the 7-day change from the snapshot nearest a week ago');
+    // the account's 8-byte discriminator is pinned on the first read: a different layout later reads as "—", never as a number
+    assert.equal(a.db.kvGet('pool_disc'), '0000000000000000', 'pinned');
+    a.feeds._cache.clear(); disc = 'ff';
+    assert.equal(await a.feeds.staked(), null, 'a changed account layout is not read as a total');
+    disc = '00'; a.feeds._cache.clear(); assert.equal((await a.feeds.staked()).amount, 52_000_000, 'the pinned layout reads again');
     a.feeds._cache.clear(); prog = '11111111111111111111111111111111';
     assert.equal(await a.feeds.staked(), null, 'refuses an account the staking program does not own');
   } finally { await a.close?.(); fs.rmSync(d, { recursive: true, force: true }); }
@@ -281,7 +284,7 @@ test('closed areas never leak over the live stream or the counts', async () => {
   assert.ok(all.includes('event: hello'), 'stream connected');
   assert.ok(!all.includes('SECRET'), 'nothing from closed areas: ' + all);
   const st = await (await fetch(at + '/api/state')).json();
-  assert.equal(st.counts.newToday, 0); assert.ok(!JSON.stringify(st).includes('SECRET'));
+  assert.ok(!JSON.stringify(st).includes('SECRET'));
   assert.equal((await fetch(at + '/api/stream', { method: 'POST' })).status, 405);
   await a.close(); fs.rmSync(d, { recursive: true, force: true });
 });

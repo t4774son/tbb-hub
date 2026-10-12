@@ -37,7 +37,7 @@ function raw(method, p, { body = null, host = HOST, headers = {}, ip = `203.0.11
     r.on('error', reject); if (data) r.write(data); r.end();
   });
 }
-const PUBLIC_READS = ['/api/state', '/api/lore', '/api/chart', '/api/prices', '/api/allies'];
+const PUBLIC_READS = ['/api/state', '/api/lore', '/api/chart', '/api/allies'];
 // the two POSTs that answer 200 to a stranger, each on purpose
 const OPEN_WRITES = { '/api/auth/logout': 'clears the caller’s own cookie; nothing to clear', '/api/report': 'the Help page’s “Report a problem” note: anonymous, 1000 chars, 10/min burst 5 per IP, 500 unresolved cap' };
 const BODIES = { '/api/report': { kind: 'problem', target: 'help', reason: 'launch check' } };
@@ -104,15 +104,12 @@ test('there is no Swap: no hero button, route, feature flag, view, icon, style, 
   assert.ok(!/swap/i.test(html), 'the shell never says swap');
   const served = ['public/js/app.js', 'public/js/views.js', 'public/js/ui.js', 'public/css/app.css', 'public/index.html', 'admin/admin.js', 'admin/index.html', 'admin/admin.css', 'lib/app.js', 'lib/admin.js', 'lib/settings.js', 'server.js', 'scripts/shots.js', '.env.example'];
   for (const f of served) {
-    const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/font-display: swap/g, '').replace(/.*old #\/swap address.*\n.*parts\[0\] === 'swap'.*\n/, ''); // the fallback for old links is the one allowed mention
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/font-display: swap/g, '');
     assert.ok(!/swap/i.test(src), f + ' mentions swap');
   }
   const st = (await raw('GET', '/api/state')).json;
   assert.ok(!('swap' in st.features), 'no swap feature flag');
   assert.ok(!('swapOpen' in app.config), 'no swap server setting');
-  // an old #/swap link falls back to the home quietly: the page script sends it home instead of a Not found card
-  const js = fs.readFileSync(path.join(ROOT, 'public/js/app.js'), 'utf8');
-  assert.ok(/parts\[0\] === 'swap'/.test(js) && /replaceState/.test(js), 'the old address is sent home');
 });
 
 test('launch: nothing admin on the public host; dot paths, source maps and uploads are 404; the admin host without Access is refused', async () => {
@@ -131,14 +128,12 @@ test('launch: nothing admin on the public host; dot paths, source maps and uploa
 
 test('launch: /api/state and the live stream carry public numbers and copy only', async () => {
   const st = (await raw('GET', '/api/state')).json;
-  assert.deepEqual(Object.keys(st).sort(), ['alerts', 'banner', 'counts', 'features', 'genesis', 'lore', 'me', 'operator', 'rooms', 'sections', 'stats', 'story', 'voteCloses', 'x'].sort());
+  assert.deepEqual(Object.keys(st).sort(), ['alerts', 'banner', 'features', 'genesis', 'lore', 'me', 'operator', 'rooms', 'sections', 'stats', 'story', 'x'].sort());
   assert.equal(st.me, null); assert.equal(st.x, false, 'no X button');
   assert.deepEqual(st.features, { chat: false, accounts: false, ideas: false });
-  assert.deepEqual(st.counts, { ideas: 0, allies: 0, newToday: 0 });
-  assert.deepEqual(Object.keys(st.stats).sort(), ['at', 'btcHeight', 'btcUsd', 'change24h', 'feeds', 'holders', 'marketCap', 'price', 'season', 'staked'].sort()); // btcUsd: the BTC price, for the price in sats (the same feed /api/prices always had)
+  assert.deepEqual(Object.keys(st.stats).sort(), ['at', 'btcHeight', 'btcUsd', 'change24h', 'fdv', 'feeds', 'holders', 'marketCap', 'price', 'season', 'staked'].sort()); // btcUsd: the BTC price, for the price in sats
   for (const k of Object.keys(st.stats.feeds)) assert.deepEqual(Object.keys(st.stats.feeds[k]).sort(), ['at', 'ttl'], 'feed ages carry a time and a period, not a URL or an error');
   const s = JSON.stringify(st); for (const bad of [/cloudflareaccess|example-team|admin\.hub|e{64}|sha256|helius|api_key|apikey|\/home\//i]) assert.ok(!bad.test(s), String(bad));
-  const pr = (await raw('GET', '/api/prices')).json; assert.deepEqual(Object.keys(pr).sort(), ['btcUsd', 'marketCap', 'solUsd', 'supply', 'tbbUsd'].sort());
   // the stream: a hello with the block height (never a visitor count), then only pings until a feed changes
   const first = await new Promise((resolve, reject) => {
     const r = http.request({ host: '127.0.0.1', port, method: 'GET', path: '/api/stream', headers: { host: HOST, 'cf-connecting-ip': '203.0.113.250' } }, (res) => { res.once('data', (c) => { resolve({ status: res.statusCode, headers: res.headers, chunk: String(c) }); res.destroy(); }); });
@@ -150,7 +145,7 @@ test('launch: /api/state and the live stream carry public numbers and copy only'
 });
 
 test('launch: the headers name no software, carry the CSP everywhere, and the ETag is a content hash', async () => {
-  for (const [p, type] of [['/', 'text/html'], ['/css/app.css', 'text/css'], ['/js/app.js', 'text/javascript'], ['/img/summit-wide.jpg', 'image/jpeg'], ['/art/tbb-whitepaper.png', 'image/png'], ['/api/prices', 'application/json'], ['/nowhere.txt', 'text/plain'], ['/api/nope', 'application/json']]) {
+  for (const [p, type] of [['/', 'text/html'], ['/css/app.css', 'text/css'], ['/js/app.js', 'text/javascript'], ['/img/summit-wide.jpg', 'image/jpeg'], ['/art/tbb-whitepaper.png', 'image/png'], ['/api/chart', 'application/json'], ['/nowhere.txt', 'text/plain'], ['/api/nope', 'application/json']]) {
     for (const method of ['GET', 'HEAD']) {
       const r = await raw(method, p);
       assert.ok(!('server' in r.headers) && !('x-powered-by' in r.headers) && !('via' in r.headers), `${method} ${p}: no software header`);
@@ -159,7 +154,7 @@ test('launch: the headers name no software, carry the CSP everywhere, and the ET
       assert.equal(r.headers['strict-transport-security'], 'max-age=31536000; includeSubDomains', `${method} ${p}: HSTS on the https origin`);
       assert.equal(r.headers['x-content-type-options'], 'nosniff'); assert.equal(r.headers['referrer-policy'], 'no-referrer'); assert.equal(r.headers['x-frame-options'], 'DENY');
       if (r.status === 200 && !p.startsWith('/api/')) assert.match(String(r.headers.etag), /^"[A-Za-z0-9_-]{22}"$/, `${method} ${p}: content-hash ETag, no inode or time`);
-      if (method === 'GET') { if (p === '/' || p === '/api/prices') assert.equal(r.headers['cache-control'], 'no-cache', p + ': revalidated, never stale'); if (p === '/api/nope' || p === '/nowhere.txt') assert.equal(r.headers['cache-control'], 'no-store'); }
+      if (method === 'GET') { if (p === '/' || p === '/api/chart') assert.equal(r.headers['cache-control'], 'no-cache', p + ': revalidated, never stale'); if (p === '/api/nope' || p === '/nowhere.txt') assert.equal(r.headers['cache-control'], 'no-store'); }
       if (method === 'HEAD' && p.startsWith('/api/')) assert.equal(r.status, 404, 'API routes are GET-only');
       if (method === 'HEAD') assert.equal(r.text, '', 'HEAD has no body');
     }

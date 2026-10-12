@@ -1,10 +1,10 @@
 // The Bitcoin Bull — client core: state, router, home screen, live updates, the account button, Easter eggs.
-import { h, $, $$, clear, icon, avatar, usd, pct, num, compact, ago, api, toast, copy, reducedMotion, richText, richStory, CA, hooks } from './ui.js';
+import { h, $, $$, clear, icon, avatar, usd, pct, num, compact, ago, ageLabel, api, toast, copy, reducedMotion, richText, richStory, CA, hooks } from './ui.js';
 
 const SITE_TITLE = 'The Bitcoin Bull · $TBB community dashboard';
 import { VIEWS } from './views.js';
 
-export const S = { features: { chat: false, accounts: false, ideas: false }, me: null, stats: null, alerts: [], rooms: [], counts: {}, lore: null, height: null, voteCloses: 0, story: null };
+export const S = { features: { chat: false, accounts: false, ideas: false }, me: null, stats: null, alerts: [], rooms: [], lore: null, height: null, story: null };
 const bus = new EventTarget();
 export const on = (ev, f) => { const w = (e) => f(e.detail); bus.addEventListener(ev, w); return () => bus.removeEventListener(ev, w); };
 const fire = (ev, d) => bus.dispatchEvent(new CustomEvent(ev, { detail: d }));
@@ -38,14 +38,11 @@ function setStat(id, text, cls) {
   if (v.textContent !== text) { v.textContent = text; v.classList.remove('tick'); void v.offsetWidth; if (!reducedMotion()) v.classList.add('tick'); }
   v.classList.toggle('up', cls === 'up'); v.classList.toggle('down', cls === 'down');
 }
-// "updated 2m ago" on every number, ticking in the browser. Older than twice its refresh interval = delayed, shown as such.
-function ageLabel(f) {
-  if (!f || !f.at) return { text: '', stale: false, title: '' };
-  const age = Date.now() - f.at; const stale = age > 2 * f.ttl;
-  const t = age < 45_000 ? 'just now' : age < 3600_000 ? `${Math.round(age / 60_000)}m ago` : age < 86400_000 ? `${Math.round(age / 3600_000)}h ago` : `${Math.round(age / 86400_000)}d ago`;
-  const every = f.ttl >= 60_000 ? `${Math.round(f.ttl / 60_000)} min` : `${Math.round(f.ttl / 1000)} s`;
-  return { text: stale ? `delayed · ${t}` : t, stale, title: `${stale ? 'Delayed: the source has not answered lately. ' : ''}Last updated ${t}; refreshes about every ${every}.` };
-}
+// "updated 2m ago" on every number (ui.js ageLabel), ticking in the browser against the server's clock: every state
+// carries the server's own time (stats.at), and the difference to this device's clock is taken out of every age.
+let skew = 0;
+const serverNow = () => Date.now() - skew;
+const noteSkew = (st) => { if (st && Number.isFinite(st.at) && st.at > 0) skew = Date.now() - st.at; };
 // No number on screen (no indexer key, source never answered) → no age either: an age next to "—" would be a fake.
 let sparkOk = false;
 const HAS = { market: () => S.stats?.price != null, holders: () => S.stats?.holders != null, staked: () => !!S.stats?.staked, season: () => !!S.stats?.season, chart: () => sparkOk };
@@ -53,7 +50,7 @@ const FEED_NAME = { market: 'Price', chart: '24h chart', holders: 'Holders', sta
 function renderAges() {
   const feeds = S.stats?.feeds || {}; const lines = []; const late = [];
   for (const el of $$('.stat-age')) {
-    const a = HAS[el.dataset.feed]?.() ? ageLabel(feeds[el.dataset.feed]) : { text: '' };
+    const a = HAS[el.dataset.feed]?.() ? ageLabel(feeds[el.dataset.feed], serverNow()) : { text: '' };
     if (a.text) { lines.push(`${FEED_NAME[el.dataset.feed]}: ${a.title}`); if (a.stale) late.push(FEED_NAME[el.dataset.feed].toLowerCase()); }
     // the stat itself only speaks up when its source is late; the panel line below carries the normal "updated" note
     const text = a.stale ? a.text : '';
@@ -62,7 +59,7 @@ function renderAges() {
     el.closest('.stat')?.classList.toggle('is-stale', a.stale);
   }
   const line = $('#panelAge'); if (!line) return;
-  const main = HAS.market() ? ageLabel(feeds.market) : null;
+  const main = HAS.market() ? ageLabel(feeds.market, serverNow()) : null;
   if (!main || !main.text) { line.hidden = true; return; }
   line.hidden = false; line.title = lines.join('\n');
   const text = `Updated ${main.stale ? main.text.replace('delayed · ', '') : main.text}${late.length ? ` · delayed: ${late.join(', ')}` : ''}`;
@@ -77,10 +74,11 @@ function renderStats() {
   setStat('st-holders', s.holders ? num(s.holders) : '—');
   $('#st-holders').hidden = !s.holders; // no number, no stat: a "soon" is not a value
   renderSeason(s.season);
-  // under the price: the same price in sats (the BTC price rides along in /api/state) and the market cap, both already fetched
+  // under the price: the same price in sats (the BTC price rides along in /api/state) and the market cap, both already
+  // fetched; when the source gives only the fully diluted value, it is labelled FDV, not market cap
   const sub = $('#st-sub'); const subParts = [];
   if (s.price > 0 && s.btcUsd > 0) subParts.push(`≈ ${sats(s.price / s.btcUsd * 1e8)} sats`);
-  if (s.marketCap > 0) subParts.push(`Market cap ${usd(s.marketCap)}`);
+  if (s.marketCap > 0) subParts.push(`Market cap ${usd(s.marketCap)}`); else if (s.fdv > 0) subParts.push(`FDV ${usd(s.fdv)}`);
   sub.hidden = !subParts.length; sub.textContent = subParts.join(' · ');
   const st = s.staked;
   setStat('st-staked', st && Number.isFinite(st.amount) ? compact(st.amount) : '—');
@@ -224,8 +222,9 @@ async function nextLore() {
 }
 $('#lore').addEventListener('click', (e) => {
   if (e.target.closest('a')) return;
-  const el = $('#lore'); el.classList.toggle('open');
-  $('.lore-meta', el).setAttribute('aria-hidden', el.classList.contains('open') ? 'false' : 'true');
+  const el = $('#lore'); const open = el.classList.toggle('open');
+  $('.lore-btn', el).setAttribute('aria-expanded', String(open));
+  $('.lore-meta', el).setAttribute('aria-hidden', open ? 'false' : 'true');
 });
 
 // live chat preview: a small window onto Main / Builds. Everything else happens inside the full chat.
@@ -268,7 +267,7 @@ async function renderLinks() {
       h('span', { class: 't-ico' }, icon((LINK_ICON.find(([re]) => re.test(a.url)) || [0, 'link'])[1])),
       h('span', { class: 't-main' }, h('span', { class: 't-label' }, a.title), h('span', { class: 't-sub' }, host(a.url))),
       h('span', { class: 'link-ext', 'aria-hidden': 'true' }, '↗'))));
-  } catch { /* the drawer keeps what it had */ }
+  } catch { if (!$('#linksList .link-row:not(.link-skel)')) clear($('#linksList'), h('p', { class: 'ti-empty' }, 'Links unavailable right now.')); } // nothing shown yet: say so instead of shimmering on
 }
 
 async function renderIdeas() {
@@ -305,7 +304,8 @@ export async function refresh() {
   try {
     const s = await api('/api/state');
     $('#llc').textContent = s.operator ? `© ${new Date().getFullYear()} ${s.operator}` : `© ${new Date().getFullYear()} · community-made page`;
-    Object.assign(S, { features: s.features || {}, me: s.me, x: !!s.x, stats: s.stats, alerts: s.alerts, rooms: s.rooms, counts: s.counts, genesis: s.genesis, voteCloses: s.voteCloses, banner: s.banner || null, sections: s.sections || {}, story: s.story || null });
+    Object.assign(S, { features: s.features || {}, me: s.me, x: !!s.x, stats: s.stats, alerts: s.alerts, rooms: s.rooms, genesis: s.genesis, banner: s.banner || null, sections: s.sections || {}, story: s.story || null });
+    noteSkew(s.stats);
     if (s.stats.btcHeight) S.height = s.stats.btcHeight;
     renderStats(); renderMe(); renderFeatures(); renderAlert(); renderStatus(); renderBanner(); renderSections(); renderStory();
     if (!S.lore) { if (genesisMoment()) { lorePinned = true; showLore(s.genesis, { instant: true }); } else showLore(s.lore, { instant: true }); }
@@ -328,7 +328,7 @@ function live() {
   es.addEventListener('open', () => { liveRetry = 5000; root.classList.remove('offline'); root.classList.add('live'); });
   es.addEventListener('error', () => { root.classList.remove('live'); if (es.readyState === EventSource.CLOSED) { root.classList.add('offline'); scheduleLive(); } });
   es.addEventListener('hello', (e) => { const d = JSON.parse(e.data); if (d.height) S.height = d.height; renderStatus(); });
-  es.addEventListener('stats', (e) => { S.stats = { ...S.stats, ...JSON.parse(e.data) }; renderStats(); });
+  es.addEventListener('stats', (e) => { const d = JSON.parse(e.data); noteSkew(d); S.stats = { ...S.stats, ...d }; renderStats(); });
   es.addEventListener('alert', () => renderIdeas());
   es.addEventListener('block', (e) => {
     const d = JSON.parse(e.data); S.height = d.height; renderStatus();
@@ -359,12 +359,15 @@ export function flashLights(twice = false) {
 // A modal; `locked` = no Escape / backdrop close (the one-time recovery code must be acknowledged first).
 export function modal(title, build, { onClose, locked = false } = {}) {
   const host = $('#modal'); const opener = document.activeElement;
-  const close = () => { clear(host); document.removeEventListener('keydown', esc, true); if (opener && opener.isConnected && document.body.contains(opener)) opener.focus?.(); onClose?.(); };
+  // everything behind the dialog is inert while it is open (Tab cannot walk out of it); lifted before focus goes back
+  const behind = () => [$('#win'), sheet, drawer];
+  const close = () => { clear(host); document.removeEventListener('keydown', esc, true); for (const el of behind()) el.inert = false; if (opener && opener.isConnected && document.body.contains(opener)) opener.focus?.(); onClose?.(); };
   const esc = (e) => { if (e.key === 'Escape') { e.stopPropagation(); if (!box.dataset.locked) close(); } };
   const box = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title, 'data-title': title });
   if (locked) box.dataset.locked = '1';
   const wrap = h('div', { class: 'modal-wrap', onclick: (e) => { if (e.target === wrap && !box.dataset.locked) close(); } }, box);
   clear(host, wrap);
+  for (const el of behind()) el.inert = true;
   build(box, close, box);
   const heading = box.querySelector('.modal-title'); if (heading && heading.textContent.trim() === title) heading.classList.add('is-dup'); // the 2009 dialog already says it in its title bar
   document.addEventListener('keydown', esc, true);
@@ -446,12 +449,13 @@ $('#shareBtn').addEventListener('click', async () => {
   toast('Today’s line copied. Paste it anywhere.');
 });
 
-// 2009 menus
-function closeMenus() { for (const m of $$('.menu.open')) m.classList.remove('open'); }
+// 2009 menus (each button says whether its list is open)
+const openMenu = (m) => { m.classList.add('open'); $('.menu-btn', m).setAttribute('aria-expanded', 'true'); };
+function closeMenus() { for (const m of $$('.menu.open')) { m.classList.remove('open'); $('.menu-btn', m).setAttribute('aria-expanded', 'false'); } }
 for (const m of $$('.menu')) {
   const b = $('.menu-btn', m);
-  b.addEventListener('click', (e) => { e.stopPropagation(); const was = m.classList.contains('open'); closeMenus(); if (!was) m.classList.add('open'); });
-  b.addEventListener('mouseenter', () => { if ($('.menu.open') && !m.classList.contains('open')) { closeMenus(); m.classList.add('open'); } });
+  b.addEventListener('click', (e) => { e.stopPropagation(); const was = m.classList.contains('open'); closeMenus(); if (!was) openMenu(m); });
+  b.addEventListener('mouseenter', () => { if ($('.menu.open') && !m.classList.contains('open')) { closeMenus(); openMenu(m); } });
 }
 document.addEventListener('click', (e) => { if (!e.target.closest('.menu')) closeMenus(); });
 // list view: double-click opens (single click works too, for phones)
@@ -500,6 +504,9 @@ function leaveClosed(msg) {
 }
 const sheet = $('#sheet'); const backdrop = $('#backdrop');
 let cleanup = null; let lastFocus = null; let openRoute = null;
+// While a sheet or drawer is open the page behind it is inert (no Tab into it, no clicks); the dock stays live, since
+// its tabs switch drawers and tapping the lit one closes. Lifted before focus is handed back.
+const behindDialogs = (on) => { for (const el of $$('.win-title, .menubar, .toolbar, .home > :not(.dock)')) el.inert = on; };
 // ---- drawers: the dock's four tabs. Each is a hash route, so Back, Forward, Escape and the backdrop behave like the sheet's.
 const DRAWERS = { story: 'Story', links: 'Links', season: 'Season 1 leaders', live: 'Live chat' };
 // the drawer's own link sits in its title row (the card headers underneath stay hidden): the Season board, the full chat
@@ -519,7 +526,7 @@ function openDrawer(id) {
   if (id === 'live') { renderBoard(); renderIdeas(); } else if (id === 'links') renderLinks();
   if (openDrawerId === id) return;
   if (!openDrawerId) lastFocus = document.activeElement;
-  openDrawerId = id; drawer.hidden = false; drawerBackdrop.hidden = false; drawer.classList.remove('out'); placeDrawer();
+  openDrawerId = id; drawer.hidden = false; drawerBackdrop.hidden = false; drawer.classList.remove('out'); placeDrawer(); behindDialogs(true);
   $('#drawerBody').scrollTop = 0;
   setTimeout(() => { if (!drawer.contains(document.activeElement)) $('#drawerTitle').focus?.(); }, 50);
 }
@@ -527,6 +534,7 @@ function closeDrawer() {
   if (drawer.hidden) return;
   openDrawerId = null; lightDock(null);
   document.title = SITE_TITLE;
+  behindDialogs(!sheet.hidden);
   const done = () => { drawer.hidden = true; drawerBackdrop.hidden = true; };
   if (reducedMotion() || root.dataset.theme === 'light') done(); else { drawer.classList.add('out'); setTimeout(done, 240); }
   lastFocus?.focus?.();
@@ -557,8 +565,6 @@ async function route() {
   const hash = location.hash.replace(/^#\/?/, '');
   if (/^\?x=/.test(hash)) return xHash(); // the Sign in with X return: a message, not a page
   const parts = hash.split('/').filter(Boolean).map((p) => { try { return decodeURIComponent(p); } catch { return ''; } });
-  // an old #/swap address (and anything under it) goes quietly back to the home: no card, no message
-  if (parts[0] === 'swap') { history.replaceState(history.state, '', location.pathname + location.search); parts.length = 0; seen.set(cur, ''); }
   if (cleanup) { try { cleanup(); } catch { /* */ } cleanup = null; }
   if (!parts.length) { closeDrawer(); return closeSheet(); }
   // a closed area typed in by hand (chat, live) shows the calm "Coming soon" card, whatever came after the slash
@@ -571,7 +577,7 @@ async function route() {
   if (!openRoute) lastFocus = document.activeElement;
   openRoute = parts[0];
   lightDock(!closed && parts[0] === 'learn' ? 'learn' : parts[0] === 'help' ? 'learn' : null); // the dock tab that owns this sheet
-  sheet.hidden = false; backdrop.hidden = false; sheet.classList.remove('out');
+  sheet.hidden = false; backdrop.hidden = false; sheet.classList.remove('out'); behindDialogs(true);
   document.body.style.overflow = 'hidden';
   const body = $('#sheetBody'); body.className = 'sheet-body'; body.scrollTop = 0;
   clear($('#sheetTools'));
@@ -590,6 +596,7 @@ function closeSheet() {
   openRoute = null; lightDock(null);
   document.title = SITE_TITLE;
   document.body.style.overflow = '';
+  behindDialogs(!drawer.hidden);
   const done = () => { sheet.hidden = true; backdrop.hidden = true; clear($('#sheetBody')); };
   if (reducedMotion() || root.dataset.theme === 'light') done(); else { sheet.classList.add('out'); setTimeout(done, 240); }
   lastFocus?.focus?.();

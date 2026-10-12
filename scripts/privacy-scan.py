@@ -23,7 +23,7 @@ The rules file (never published either) adds what is particular to one project, 
   warn: <regex>           a word that only warns (printed, the scan still passes)
 Set SCAN_COMMIT=1 to check the latest commit too, SCAN_COMMIT=all for every commit reachable from HEAD.
 """
-import base64, io, os, re, subprocess, sys, zipfile, zlib, gzip
+import base64, datetime, io, os, re, subprocess, sys, zipfile, zlib, gzip
 from urllib.parse import unquote_to_bytes
 
 GENERIC = [r'/home/', r'/Users/(?!me\b)', r'C:\\Users', r'/root/', r'/mnt/c/Users', r'@(gmail|icloud|outlook|hotmail|yahoo|proton(mail)?)\.(com|me)',
@@ -50,7 +50,7 @@ WARN_EXT = ('.md', '.txt')  # the docs; code comments are stripped from what the
 
 # ---- the publication voice (files that get published only; the files the rules keep private are exempt) ----
 DATE = re.compile(rb'\b20[2-9]\d-[01]\d-[0-3]\d(?!\d)')                                # an ISO date from 2020 on, with or without a time after it
-TZ_OFFSET = re.compile(rb'\d\d:\d\d(?::\d\d(?:\.\d+)?)?[+-](?:0\d|1[0-4]):?[0-5]\d(?!\d)')  # a clock time with an offset: 08:45:00+02:00, 10:30-0700
+TZ_OFFSET = re.compile(rb'\d\d:\d\d(?::\d\d(?:\.\d+)?)?[+-](?:0\d|1[0-4]):?[0-5]\d(?!\d)')  # a clock time with an offset: 08:45:00+00:00, 10:30-0000
 OWNER = re.compile(rb'\b[Oo]wners?\b')
 ROUND_WORDS = ['build', 'round']  # generic; the rules file adds a project's own
 
@@ -141,6 +141,12 @@ def decoded(v):
     yield v[::-1]
 
 
+def font_time(b):
+    """An OpenType LONGDATETIME (seconds since 1904-01-01, big-endian) as text."""
+    try: return (datetime.datetime(1904, 1, 1) + datetime.timedelta(seconds=int.from_bytes(b, 'big'))).strftime('%Y-%m-%d %H:%M:%S').encode()
+    except (OverflowError, ValueError): return b'?'
+
+
 def _chr(n):
     try: return chr(n).encode('utf-8', 'ignore')
     except (ValueError, OverflowError): return b''
@@ -178,6 +184,8 @@ def views(name, data):
                 off, clen, olen = (int.from_bytes(data[e + k:e + k + 4], 'big') for k in (4, 8, 12))
                 t = data[off:off + clen]
                 t = zlib.decompress(t) if clen < olen else t
+                if data[e:e + 4] == b'head' and len(t) >= 36:  # the font's own build times, packed integers the text scan cannot see
+                    yield b'FONT-TIME ' + b' '.join(k + b'=' + font_time(t[o:o + 8]) for k, o in ((b'head.created', 20), (b'head.modified', 28)))
                 yield b'\n'.join(re.findall(rb'[\x20-\x7e]{4,}', t)); yield t.decode('utf-16-be', 'ignore').encode('utf-8', 'ignore')
             moff, mlen, poff, plen = (int.from_bytes(data[k:k + 4], 'big') for k in (24, 28, 36, 40))
             if mlen: yield zlib.decompress(data[moff:moff + mlen])
@@ -325,6 +333,7 @@ def main():
         if meta: print(f'IMAGE METADATA: {f} {meta}'); fail = 1
         for v in views(f, data):
             if v.startswith(b'UNREADABLE') or v == b'WOFF2-UNREADABLE': print(f'CAN NOT CHECK INSIDE: {f}'); fail = 1; continue
+            if v.startswith(b'FONT-TIME '): print(f"FONT TIME? {f}: {v[10:].decode()} (upstream release times are expected; a time from this machine is not)"); continue
             for label, rx in pats:
                 if f == SELF and label.startswith('generic'): continue  # its own pattern list
                 if leak(rx, v): print(f'LEAK? {f}: {label}'); fail = 1

@@ -16,13 +16,15 @@ export const ALLIES = [
   ['Solscan', 'https://solscan.io/token/42cXQvAAr7hcPBPWAS4ocVtDyeJ4Fa6gRR2uG4gppump', 'Token details on a public block explorer.'],
 ];
 
+// `--demo` account ids: plain, clearly fake, nothing shaped like an address.
+export const DEMO_IDS = ['u_demo1', 'u_demo2', 'u_demo3', 'u_demo4'];
+
 export function seed(db, { demo = false } = {}) {
   const t = Date.now();
   if (!db.get('SELECT COUNT(*) n FROM allies').n) ALLIES.forEach(([a, u, b], i) => db.run('INSERT INTO allies(title,url,blurb,sort) VALUES(?,?,?,?)', a, u, b, i));
   if (!demo) return;
   // ---- demo-only sample data (fake account ids, fake names). Never run against the real database.
-  const W = ['DemoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1', 'DemoBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB2', 'DemoCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC3', 'DemoDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4'];
-  const N = ['ridgeRunner', 'emberhoof', 'coldstorage', 'pizzaday'];
+  const W = DEMO_IDS; const N = ['ridgeRunner', 'emberhoof', 'coldstorage', 'pizzaday'];
   W.forEach((w, i) => db.run("INSERT OR IGNORE INTO users(uid,name,created_at,via) VALUES(?,?,?,'legacy')", w, N[i], t - 30 * 86400_000));
   const ideas = [[0, 'Block-time alarm', 'A little bot that pings Main Chat every time Bitcoin finds a block, with the block’s hidden message if it has one.'],
     [2, 'Bull wallpapers by the herd', 'A monthly wallpaper contest, judged by the herd.'],

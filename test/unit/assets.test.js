@@ -16,7 +16,8 @@ fs.writeFileSync(path.join(dir, 'css', 'app.css'), "@font-face{src:url('/fonts/f
 fs.writeFileSync(path.join(dir, 'js', 'a.js'), "import { b } from './b.js';\nimport * as c from \"./c.js\";\nexport const a = 1; const notRef = 'https://x.example/js/b.js'; // comments are stripped\n".repeat(20));
 fs.writeFileSync(path.join(dir, 'js', 'b.js'), "import { a } from './a.js'; export const b = 2;\n".repeat(20));
 fs.writeFileSync(path.join(dir, 'js', 'c.js'), 'export const c = 3;');
-fs.writeFileSync(path.join(dir, 'index.html'), '<!doctype html><link rel="stylesheet" href="/css/app.css"><script type="module" src="/js/a.js"></script><link rel="modulepreload" href="/js/b.js"><picture><source srcset="/img/pic.png 640w, /img/pic.png 1280w" type="image/png"><img src="/img/pic.png" width="1" height="1"></picture><a href="/api/state">api</a>' + ' '.repeat(600));
+fs.writeFileSync(path.join(dir, 'manifest.webmanifest'), JSON.stringify({ name: 'x', icons: [{ src: '/img/pic.png', sizes: '192x192', type: 'image/png' }] }) + ' '.repeat(600));
+fs.writeFileSync(path.join(dir, 'index.html'), '<link rel="manifest" href="/manifest.webmanifest"><!doctype html><link rel="stylesheet" href="/css/app.css"><script type="module" src="/js/a.js"></script><link rel="modulepreload" href="/js/b.js"><picture><source srcset="/img/pic.png 640w, /img/pic.png 1280w" type="image/png"><img src="/img/pic.png" width="1" height="1"></picture><a href="/api/state">api</a>' + ' '.repeat(600));
 
 const A = buildAssets(dir);
 
@@ -27,6 +28,9 @@ test('every file gets a hashed name; html, css and js references point at the ha
   assert.ok(html.includes(`href="${css}"`) && html.includes(`src="${js}"`) && html.includes(`href="${A.hashedFor('/js/b.js')}"`), 'html rewritten');
   assert.ok(html.includes(`srcset="${img} 640w, ${img} 1280w"`) && html.includes(`src="${img}"`), 'srcset + img rewritten');
   assert.ok(html.includes('href="/api/state"'), 'non-asset links untouched');
+  // the web app manifest is rewritten like a stylesheet: its icons point at the fingerprinted (immutable) copies
+  const man = JSON.parse(A.get('/manifest.webmanifest').buf.toString());
+  assert.equal(man.icons[0].src, img, 'manifest icon fingerprinted'); assert.ok(html.includes(`href="${A.hashedFor('/manifest.webmanifest')}"`), 'the manifest itself is linked by its hashed name');
   const cssText = A.get('/css/app.css').buf.toString();
   assert.ok(cssText.includes(`url('${A.hashedFor('/fonts/f.woff')}')`) && cssText.includes(`url("${img}")`), 'css urls rewritten');
   assert.ok(cssText.includes("url('https://other.example/img/pic.png')"), 'absolute outside urls untouched');
@@ -147,4 +151,18 @@ test('the real site and admin panel: every served script still parses (node --ch
     }
   }
   fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+// The server starts listening only once every brotli copy exists: the first visitors (and the CDN, which may keep a
+// response for a year) get the smallest copy, never the gzip stand-in of the first few hundred milliseconds.
+test('listen() resolves with the brotli copies ready: the first request for a hashed stylesheet is already br', async () => {
+  const { createApp } = await import('../../lib/app.js');
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'tbbbr-'));
+  const app = createApp({ env: { PORT: '0', LORE_WORKER: 'off', OFFLINE: '1', PUBLIC_ORIGIN: 'http://localhost:3000', DB_FILE: path.join(d, 'b.db') }, rpc: async () => null, fetchImpl: async () => new Response('{}'), log: () => {} });
+  try {
+    const a = await app.listen(0);
+    const r = await fetch(`http://127.0.0.1:${a.port}${app.assets.hashedFor('/css/app.css')}`, { headers: { 'accept-encoding': 'br, gzip' } });
+    assert.equal(r.headers.get('content-encoding'), 'br');
+    assert.ok(app.assets.get('/index.html').br && app.assets.get('/js/app.js').br, 'every text entry has its brotli copy once listen() resolves');
+  } finally { await app.close(); fs.rmSync(d, { recursive: true, force: true }); }
 });

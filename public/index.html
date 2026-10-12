@@ -132,8 +132,8 @@
 <polygon class="bl-rim" fill="none" stroke="url(#blRimGrad)" stroke-width="2" stroke-linejoin="round" filter="url(#blRim)" points="396.0,266.0 387.0,279.0 391.0,297.0 404.0,295.0 420.0,292.0 438.0,295.0 452.0,300.0 461.0,290.0 458.0,276.0 449.0,289.0 448.0,306.0 445.0,318.0 450.0,326.0 447.0,336.0 434.0,341.0 422.0,339.0 413.0,346.0 416.0,360.0 420.0,380.0 418.0,405.0 414.0,428.0 408.0,446.0 398.0,448.0 394.0,428.0 394.0,405.0 388.0,398.0 382.0,424.0 378.0,447.0 369.0,449.0 365.0,424.0 364.0,400.0 352.0,404.0 344.0,436.0 338.0,452.0 323.0,452.0 319.0,436.0 326.0,406.0 334.0,392.0 320.0,392.0 308.0,412.0 302.0,436.0 298.0,450.0 286.0,450.0 286.0,428.0 292.0,404.0 294.0,388.0 290.0,380.0 297.0,364.0 307.0,352.0 323.0,341.0 340.0,332.0 362.0,325.0 386.0,318.0 392.0,308.0 383.0,309.0 381.0,303.0 392.0,299.0"/>
 </svg>
 <svg class="bull-head bull-tall" viewBox="380 260 100 100" aria-hidden="true" focusable="false">
-<defs><radialGradient id="eyeGlow"><stop offset="0" stop-color="#ff6a3a" stop-opacity=".72"/><stop offset=".3" stop-color="#e8220e" stop-opacity=".4"/><stop offset=".7" stop-color="#c01008" stop-opacity=".08"/><stop offset="1" stop-color="#c01008" stop-opacity="0"/></radialGradient></defs>
-<g class="bh-head"><g class="bh-eyes"><ellipse class="bh-glow" cx="415.0" cy="311.0" rx="11.7" ry="7.4" fill="url(#eyeGlow)" opacity="0.61"/><ellipse class="bh-eye" cx="415.0" cy="311.0" rx="2.1" ry="1.1" fill="#ff5a30" opacity="0.74"/><ellipse class="bh-glow" cx="432.0" cy="310.0" rx="7.5" ry="4.8" fill="url(#eyeGlow)" opacity="0.39"/><ellipse class="bh-eye" cx="432.0" cy="310.0" rx="1.4" ry="0.7" fill="#ff5a30" opacity="0.47"/></g></g>
+<defs><radialGradient id="eyeGlowTall"><stop offset="0" stop-color="#ff6a3a" stop-opacity=".72"/><stop offset=".3" stop-color="#e8220e" stop-opacity=".4"/><stop offset=".7" stop-color="#c01008" stop-opacity=".08"/><stop offset="1" stop-color="#c01008" stop-opacity="0"/></radialGradient></defs>
+<g class="bh-head"><g class="bh-eyes"><ellipse class="bh-glow" cx="415.0" cy="311.0" rx="11.7" ry="7.4" fill="url(#eyeGlowTall)" opacity="0.61"/><ellipse class="bh-eye" cx="415.0" cy="311.0" rx="2.1" ry="1.1" fill="#ff5a30" opacity="0.74"/><ellipse class="bh-glow" cx="432.0" cy="310.0" rx="7.5" ry="4.8" fill="url(#eyeGlowTall)" opacity="0.39"/><ellipse class="bh-eye" cx="432.0" cy="310.0" rx="1.4" ry="0.7" fill="#ff5a30" opacity="0.47"/></g></g>
 </svg>
 <!-- bull:end -->
     <span class="beam" id="beam"></span>
@@ -150,11 +150,11 @@
     <span class="win-btns"><button tabindex="-1" class="wb wb-min" data-egg="min" aria-label="Minimize"></button><button tabindex="-1" class="wb wb-max" data-egg="max" aria-label="Maximize"></button><button tabindex="-1" class="wb wb-close" data-action="theme-dark" aria-label="Close (back to night mode)"></button></span>
   </div>
   <nav class="menubar" aria-label="Menu">
-    <div class="menu"><button class="menu-btn" aria-haspopup="true">File</button>
+    <div class="menu"><button class="menu-btn" aria-haspopup="true" aria-expanded="false">File</button>
       <div class="menu-list" role="menu"><button role="menuitem" data-href="#/story">Story…</button><hr><button role="menuitem" data-action="theme-dark">Exit</button></div></div>
-    <div class="menu"><button class="menu-btn" aria-haspopup="true">Options</button>
+    <div class="menu"><button class="menu-btn" aria-haspopup="true" aria-expanded="false">Options</button>
       <div class="menu-list" role="menu"><button role="menuitem" data-egg="generate"><span class="gen-tick"></span>Generate Coins</button><hr><button role="menuitem" data-ext="https://tbbtimemachine.xyz">TBB Time Machine ↗</button><button role="menuitem" data-action="copy-ca">Copy contract address</button></div></div>
-    <div class="menu"><button class="menu-btn" aria-haspopup="true">Help</button>
+    <div class="menu"><button class="menu-btn" aria-haspopup="true" aria-expanded="false">Help</button>
       <div class="menu-list" role="menu"><button role="menuitem" data-href="#/help">Help…</button><button role="menuitem" data-href="#/learn">Learn…</button><hr><button role="menuitem" data-egg="about">About The Bitcoin Bull…</button></div></div>
   </nav>
   <div class="toolbar">
@@ -208,7 +208,7 @@
       <a class="tile" href="#/help" data-k="help"><span class="t-status">Read</span><span class="t-date"></span><span class="t-ico" data-i="help"></span><span class="t-main"><span class="t-label">Help</span><span class="t-sub">Safety and how things work</span></span></a>
     </nav>
 
-    <button class="lore" id="lore" aria-live="polite"><span class="lore-text">The Times 03/Jan/2009 Chancellor on brink of second bailout for banks</span><span class="lore-meta"></span></button>
+    <div class="lore" id="lore"><button class="lore-btn" type="button" aria-expanded="false" aria-controls="loreMeta"><span class="lore-text">The Times 03/Jan/2009 Chancellor on brink of second bailout for banks</span></button><span class="lore-meta" id="loreMeta"></span></div>
 
     <!-- the dock is the navigation: drawers (Story, Links, Season 1, Chat) and the Learn sheet. Build and Chat are hidden
          while closed; the server's switches bring each tab back without a page change. -->

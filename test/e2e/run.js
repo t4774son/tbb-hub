@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from '../../lib/app.js';
-import { seed } from '../../scripts/seed.js';
+import { seed, DEMO_IDS } from '../../scripts/seed.js';
 import { newUid, plantUser, sessionFor } from '../unit/helpers.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -33,7 +33,6 @@ const fakeFetch = async (url) => {
   const u = String(url);
   if (u.includes('/cdn-cgi/access/certs')) return new Response(JSON.stringify({ keys: [{ kid: 'kid-1', kty: 'RSA', alg: 'RS256', use: 'sig', ...RSA.publicKey.export({ format: 'jwk' }) }] }), { status: 200, headers: { 'content-type': 'application/json' } });
   const body = u.includes('/api/board') ? { mint: '42cXQvAAr7hcPBPWAS4ocVtDyeJ4Fa6gRR2uG4gppump', season: { start: 1791244200000, end: 1793836200000, overtimeHours: 0, prizeTbb: 4206900, stakeApr: 0.08 }, totals: { buyers: 308, buys: 789, volumeUsd: 187421.07 }, leaderboard: [{ wallet: 'TestWa11etAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAone', score: 10044.14 }, { wallet: 'TestWa11etBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBtwo', score: 6200 }, { wallet: 'TestWa11etCCCCCCCCCCCCCCCCCCCCCCCCCCCCCthree', score: 3100.5 }, { wallet: '4KgvDmEjPJNtbiVhnZ9Cf1i1vgeZdKrCNKhHVTNTkLWT', score: 10 }] }
-    : u.includes('So1111') ? { pairs: [{ baseToken: { symbol: 'SOL' }, quoteToken: { symbol: 'USDC' }, priceUsd: '142.10', liquidity: { usd: 9e9 } }] }
     : u.includes('geckoterminal') ? { data: { attributes: { ohlcv_list: Array.from({ length: 24 }, (_, i) => [1791460000 + (23 - i) * 3600, 0, 0, 0, 0.0079 + Math.sin(i / 3) * 0.0002, 1]) } }, meta: { base: { address: '42cXQvAAr7hcPBPWAS4ocVtDyeJ4Fa6gRR2uG4gppump' } } }
     : u.includes('dexscreener') ? { pairs: [{ baseToken: { address: '42cXQvAAr7hcPBPWAS4ocVtDyeJ4Fa6gRR2uG4gppump' }, priceUsd: '0.008122', priceChange: { h24: 2.56 }, liquidity: { usd: 1 }, marketCap: 8122066, pairAddress: '6unnG2hL8udPjDpu3TchvAtptu3dq8AS7tymrWDN2LLC' }] }
       : u.includes('prices') ? { USD: 98250 } : {};
@@ -170,14 +169,6 @@ await t('home at launch: bull hero, price + chart + staked (plain text, no staki
     assert(!(await page.locator('#sheet .soon-list, #sheet .soon-badge').count()), hash + ': no bullet list, no doubled badge');
     assert(await page.isHidden('#drawer'), hash + ': no drawer');
     await page.keyboard.press('Escape'); await page.waitForFunction(() => document.querySelector('#sheet').hidden);
-  }
-  // an old #/swap link (and anything under it) falls back to the home quietly: no card, no toast, no error, the address cleared
-  for (const hash of ['#/swap', '#/swap/anything']) {
-    const n = await page.locator('.toast').count(); const errs = [];
-    const onErr = (e) => errs.push(e.message); page.on('pageerror', onErr);
-    await page.evaluate((x) => { location.hash = x; }, hash); await page.waitForFunction(() => !location.hash || location.hash === '#' || location.hash === '#/');
-    await page.waitForTimeout(300); page.off('pageerror', onErr);
-    assert(await page.isHidden('#sheet') && await page.isHidden('#drawer') && (await page.locator('.toast').count()) === n && !errs.length, hash + ': home, quietly ' + JSON.stringify(errs));
   }
   assert(!(await page.locator('.tile[data-k="calc"]').count()), 'one calculator: the Time Machine link only');
   await page.waitForFunction(() => document.querySelector('#st-season .stat-v').textContent === '308 buyers');
@@ -424,7 +415,7 @@ app2.settings.set('areas', { chat: true, accounts: true });
 await t('once opened: the Chat drawer shows the small live chat preview, room chips, top ideas; the Chat and Build tabs are live (no Soon mark)', async () => {
   // the seed writes no chat messages: this test writes its own, plainly
   assert(app2.db.get("SELECT COUNT(*) n FROM messages WHERE uid='herd'").n === 0, 'no welcome posts from the seed');
-  for (const [w, b, i] of [['DemoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1', 'Anyone watching the block height tonight?', 3], ['DemoBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB2', 'Staked a little more this week.', 2]]) app2.db.run('INSERT INTO messages(room,uid,body,created_at) VALUES(?,?,?,?)', 'general', w, b, Date.now() - i * 60_000);
+  for (const [w, b, i] of [[DEMO_IDS[0], 'Anyone watching the block height tonight?', 3], [DEMO_IDS[1], 'Staked a little more this week.', 2]]) app2.db.run('INSERT INTO messages(room,uid,body,created_at) VALUES(?,?,?,?)', 'general', w, b, Date.now() - i * 60_000);
   const { page, ctx } = await newPage(); await page.goto(BASE);
   await page.waitForFunction(() => !document.querySelector('.dk[data-dk="live"]').hidden && !document.querySelector('.dk[data-dk="build"]').hidden, null, { timeout: 10000 });
   assert(await page.$$eval('.dk[data-dk="live"], .dk[data-dk="build"]', (els) => els.every((el) => !el.hasAttribute('aria-disabled') && !el.classList.contains('is-soon') && el.offsetParent)), 'nothing left to come: the two tabs are back and live');
@@ -792,6 +783,11 @@ await t('live numbers: every stat says when it was updated; stream pushes update
   app2.emit('stats', { price: 0.0099, change24h: -1.2, feeds });
   await waitFn('pushed price', () => document.querySelector('#st-price .stat-v').textContent === '$0.0099');
   assert((await page.textContent('#st-24h .stat-v')) === '−1.2%', '24h updated');
+  assert((await page.textContent('#st-sub')).includes('Market cap $8.12M'), 'market cap from the source: ' + await page.textContent('#st-sub'));
+  app2.emit('stats', { marketCap: null, fdv: 5_000_000, change24h: null, feeds });
+  await waitFn('FDV label', () => document.querySelector('#st-sub').textContent.includes('FDV $5.00M'));
+  assert(!(await page.textContent('#st-sub')).includes('Market cap') && (await page.textContent('#st-24h .stat-v')) === '—', 'the fully diluted value is labelled FDV, a missing 24h change is —');
+  app2.emit('stats', { marketCap: 8122066, change24h: -1.2, feeds });
   // a source that stopped answering: older than twice its interval → muted + "delayed"
   app2.emit('stats', { feeds: { ...feeds, market: { at: Date.now() - 7 * 60_000, ttl: 60_000 } } });
   await page.waitForSelector('#st-price .stat-age.stale');
@@ -806,6 +802,48 @@ await t('live numbers: every stat says when it was updated; stream pushes update
   assert(await page.evaluate(() => typeof EventSource !== 'undefined'), 'sse');
   const hosts = await page.evaluate(() => [...new Set(performance.getEntriesByType('resource').map((r) => new URL(r.name).host))]);
   assert(hosts.length >= 1 && hosts.every((h) => h === new URL(BASE).host), 'only this site: ' + hosts.join(','));
+  await ctx.close();
+});
+await t('dialogs: the page behind a sheet or drawer is inert (the dock stays live), a dialog makes the window inert; menus and the ticker report their state', async () => {
+  const { page, ctx } = await newPage({ who: kp(), theme: 'light', ip: '203.0.113.64' });
+  await page.goto(BASE); await page.waitForSelector('#accountBtn:not([hidden])');
+  const inert = (sel) => page.$eval(sel, (el) => el.inert === true);
+  await page.evaluate(() => { location.hash = '#/learn'; }); await page.waitForSelector('#sheet:not([hidden])'); await page.waitForTimeout(100);
+  assert(await inert('.hero') && await inert('.top') && await inert('.menubar') && !(await inert('.dock')) && !(await inert('#sheet')), 'sheet open: the page behind is inert, the dock and the sheet are not');
+  await page.evaluate(() => { location.hash = '#/story'; }); await page.waitForSelector('#drawer:not([hidden])'); await page.waitForTimeout(100);
+  assert(await inert('.hero') && !(await inert('.dock')) && !(await inert('#drawer')), 'drawer open: still inert behind, the dock reachable');
+  await page.click('.dk[data-dk="story"].on'); await page.waitForFunction(() => document.querySelector('#drawer').hidden); await page.waitForTimeout(100);
+  assert(!(await inert('.hero')) && !(await inert('.top')), 'closed: everything reachable again');
+  await page.click('#accountBtn'); await page.waitForSelector('.modal');
+  assert(await inert('#win') && await inert('#sheet'), 'a dialog: the window behind it is inert');
+  await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#modal').children.length);
+  assert(!(await inert('#win')) && (await page.evaluate(() => document.activeElement === document.querySelector('#accountBtn'))), 'dialog closed: reachable, focus back on the opener');
+  // menus (the 2009 look): the button says when its list is open
+  const exp = () => page.getAttribute('.menu-btn:has-text("File")', 'aria-expanded');
+  assert((await exp()) === 'false'); await page.click('.menu-btn:has-text("File")'); assert((await exp()) === 'true', 'open: aria-expanded true');
+  await page.hover('.menu-btn:has-text("Options")'); await page.waitForTimeout(80); assert((await exp()) === 'false' && (await page.getAttribute('.menu-btn:has-text("Options")', 'aria-expanded')) === 'true', 'hovering the next menu moves the open state: one open at a time');
+  await page.mouse.click(5, 400); assert((await page.getAttribute('.menu-btn:has-text("Options")', 'aria-expanded')) === 'false', 'closed on a click elsewhere');
+  // the ticker: a toggle button, the link outside it
+  assert((await page.$eval('#lore', (el) => el.tagName)) === 'DIV' && !(await page.getAttribute('#lore', 'aria-live')), 'the ticker is not a button and not a live region');
+  assert((await page.getAttribute('#lore .lore-btn', 'aria-expanded')) === 'false' && !(await page.locator('#lore button a').count()), 'closed, no link inside the button');
+  await page.click('#lore .lore-btn'); await page.waitForSelector('#lore.open');
+  assert((await page.getAttribute('#lore .lore-btn', 'aria-expanded')) === 'true' && (await page.locator('#loreMeta a').count()) === 1 && (await page.getAttribute('#loreMeta', 'aria-hidden')) === 'false', 'open: the meta line with its link is shown');
+  await ctx.close();
+});
+await t('a visitor whose clock is five minutes fast still sees fresh numbers: ages are measured against the server’s clock', async () => {
+  const { page, ctx } = await newPage({ ip: '203.0.113.62' });
+  await ctx.addInitScript(() => { const real = Date.now; Date.now = () => real() + 5 * 60_000; });
+  await page.goto(BASE); await page.waitForSelector('#panelAge:not([hidden])');
+  const line = await page.textContent('#panelAge');
+  assert(/^Updated (just now|[1-4]m ago)$/.test(line) && !(await page.$('#panelAge.stale')) && !(await page.$('.stat-age.stale')), 'not delayed on a fast clock: ' + line);
+  await ctx.close();
+});
+await t('Links drawer: when the links cannot be fetched the drawer says so instead of shimmering', async () => {
+  const { page, ctx } = await newPage({ ip: '203.0.113.63' });
+  await page.route('**/api/allies', (r) => r.fulfill({ status: 500, headers: { 'content-type': 'application/json' }, body: '{"error":"down"}' }));
+  await page.goto(BASE); await page.evaluate(() => { location.hash = '#/links'; });
+  await page.waitForSelector('#linksList .ti-empty');
+  assert((await page.textContent('#linksList .ti-empty')) === 'Links unavailable right now.' && !(await page.locator('#linksList .link-skel').count()), 'a plain line replaces the skeleton');
   await ctx.close();
 });
 await t('admin panel: only on the admin host with a valid Access token; banner, sections, links, story and maintenance reach the public site; audit trail; area switches fail closed and flip live', async () => {
