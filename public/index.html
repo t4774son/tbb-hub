@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0B0B0C">
+<meta name="referrer" content="no-referrer">
+<title>The Bitcoin Bull · $TBB community dashboard</title>
+<meta name="description" content="The Bitcoin Bull ($TBB) read-only community dashboard: price and staking data from public sources, links and guides. Never asks for a wallet. Not financial advice.">
+<link rel="canonical" href="https://thebitcoinbull.club/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Bitcoin Bull">
+<meta property="og:title" content="The Bitcoin Bull · $TBB community dashboard">
+<meta property="og:description" content="The Bitcoin Bull ($TBB) read-only community dashboard: price and staking data from public sources, links and guides. Never asks for a wallet. Not financial advice.">
+<meta property="og:url" content="https://thebitcoinbull.club/">
+<meta property="og:image" content="https://thebitcoinbull.club/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A low-poly bull on a summit at night, with the words The Bitcoin Bull">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Bitcoin Bull · $TBB community dashboard">
+<meta name="twitter:description" content="The Bitcoin Bull ($TBB) read-only community dashboard: price and staking data from public sources, links and guides. Never asks for a wallet. Not financial advice.">
+<meta name="twitter:image" content="https://thebitcoinbull.club/img/og.jpg">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/img/icon-192.png">
+<script src="/js/theme.js"></script>
+<link rel="preload" href="/fonts/cormorant-italic.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="/css/app.css">
+<script type="module" src="/js/app.js"></script>
+<link rel="modulepreload" href="/js/ui.js">
+<link rel="modulepreload" href="/js/views.js">
+<link rel="modulepreload" href="/js/storytext.js">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- Dark: the scene. Light: the desktop. -->
+<div class="scene" aria-hidden="true">
+  <div class="scene-frame" id="sceneFrame">
+    <picture class="scene-img">
+      <source media="(max-aspect-ratio: 3/4)" type="image/avif" srcset="/img/summit-tall-480.avif 480w, /img/summit-tall.avif 720w" sizes="100vw">
+      <source media="(max-aspect-ratio: 3/4)" type="image/webp" srcset="/img/summit-tall-480.webp 480w, /img/summit-tall.webp 720w" sizes="100vw">
+      <source type="image/avif" srcset="/img/summit-wide-640.avif 640w, /img/summit-wide-960.avif 960w, /img/summit-wide.avif 1280w" sizes="100vw">
+      <source type="image/webp" srcset="/img/summit-wide-640.webp 640w, /img/summit-wide-960.webp 960w, /img/summit-wide.webp 1280w" sizes="100vw">
+      <img src="/img/summit-wide.jpg" width="1280" height="720" alt="" decoding="async" fetchpriority="high">
+    </picture>
+    <!-- the bull's head, rebuilt as polygons so it can turn and lower (scripts/make-bull.py writes this block) -->
+    <!-- bull:start -->
+<svg class="bull-head bull-wide" viewBox="800 80 220 240" aria-hidden="true" focusable="false">
+<defs><radialGradient id="eyeGlow"><stop offset="0" stop-color="#ff6a3a" stop-opacity=".72"/><stop offset=".3" stop-color="#e8220e" stop-opacity=".4"/><stop offset=".7" stop-color="#c01008" stop-opacity=".08"/><stop offset="1" stop-color="#c01008" stop-opacity="0"/></radialGradient><filter id="neckBlur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5"/></filter><mask id="neckFade" maskUnits="userSpaceOnUse" x="800" y="80" width="220" height="240"><rect x="800" y="80" width="220" height="240" fill="#fff"/><polygon fill="#000" filter="url(#neckBlur)" points="927,190 939,212 913,223 901,235 880,238 864,228 852,236 846,262 900,272 975,250 984,206 962,176"/></mask></defs>
+<g class="bh-sky"><polygon fill="#210b0d" points="872.0,156.0 820.0,100.0 846.0,100.0"/><polygon fill="#230b0d" points="872.0,156.0 846.0,100.0 872.0,118.0"/><polygon fill="#250a0c" points="872.0,156.0 872.0,118.0 892.0,98.0"/><polygon fill="#270a0b" points="872.0,156.0 892.0,98.0 914.0,116.0"/><polygon fill="#2c0a0b" points="872.0,156.0 914.0,116.0 930.0,140.0"/><polygon fill="#2e0a0b" points="872.0,156.0 930.0,140.0 942.0,152.0"/><polygon fill="#2d0a0a" points="872.0,156.0 942.0,152.0 938.0,172.0"/><polygon fill="#2c0a0b" points="872.0,156.0 938.0,172.0 906.0,184.0"/><polygon fill="#2c0b0c" points="872.0,156.0 906.0,184.0 872.0,226.0"/><polygon fill="#2d0c0c" points="872.0,156.0 872.0,226.0 846.0,228.0"/><polygon fill="#2e0c0d" points="872.0,156.0 846.0,228.0 822.0,212.0"/><polygon fill="#2c0c0d" points="872.0,156.0 822.0,212.0 814.0,186.0"/><polygon fill="#260c0e" points="872.0,156.0 814.0,186.0 820.0,100.0"/></g>
+<g class="bh-head" mask="url(#neckFade)">
+<polygon data-k="0" fill="#5b4c3b" points="918.9,101.9 935.1,118.1 917.3,121.4"/>
+<polygon data-k="1" fill="#a2815a" points="935.1,118.1 939.9,137.6 917.3,121.4"/>
+<polygon data-k="2" fill="#52331c" points="917.3,121.4 939.9,137.6 920.5,139.2"/>
+<polygon data-k="3" fill="#6c3e20" points="939.9,137.6 931.8,152.1 920.5,139.2"/>
+<polygon data-k="4" fill="#ad8250" points="920.5,139.2 931.8,152.1 905.9,152.1"/>
+<polygon data-k="5" fill="#6f401e" points="931.8,152.1 920.5,160.2 905.9,152.1"/>
+<polygon data-k="6" fill="#4a3425" points="823.3,116.5 815.2,132.7 833.0,131.1"/>
+<polygon data-k="7" fill="#765233" points="815.2,132.7 820.1,150.5 833.0,131.1"/>
+<polygon data-k="8" fill="#533720" points="833.0,131.1 820.1,150.5 837.9,145.7"/>
+<polygon data-k="9" fill="#96683d" points="820.1,150.5 831.4,161.9 837.9,145.7"/>
+<polygon data-k="10" fill="#9f7647" points="837.9,145.7 831.4,161.9 850.8,158.6"/>
+<polygon data-k="11" fill="#63371a" points="831.4,161.9 847.6,170.0 850.8,158.6"/>
+<polygon data-k="12" fill="#c68547" points="905.9,152.1 893.0,145.7 881.6,160.2"/>
+<polygon data-k="13" fill="#c98d4d" points="893.0,145.7 878.4,144.0 881.6,160.2"/>
+<polygon data-k="14" fill="#ad6d35" points="878.4,144.0 863.8,147.3 881.6,160.2"/>
+<polygon data-k="15" fill="#ca8b48" points="863.8,147.3 850.8,158.6 881.6,160.2"/>
+<polygon data-k="16" fill="#7a3e18" points="905.9,152.1 881.6,160.2 904.3,166.7"/>
+<polygon data-k="17" fill="#94572a" points="881.6,160.2 888.1,174.8 904.3,166.7"/>
+<polygon data-k="18" fill="#b57d46" points="881.6,160.2 873.5,165.1 888.1,174.8"/>
+<polygon data-k="19" fill="#da944c" points="881.6,160.2 850.8,158.6 873.5,165.1"/>
+<polygon data-k="20" fill="#a46731" points="873.5,165.1 850.8,158.6 850.8,170.0"/>
+<polygon data-k="21" fill="#d9944e" points="873.5,165.1 850.8,170.0 860.6,173.2"/>
+<polygon data-k="22" fill="#492610" points="939.9,170.0 920.5,160.2 917.3,176.4"/>
+<polygon data-k="23" fill="#41230d" points="905.9,152.1 904.3,166.7 920.5,160.2"/>
+<polygon data-k="24" fill="#1e0c00" points="920.5,160.2 904.3,166.7 917.3,176.4"/>
+<polygon data-k="25" fill="#251106" points="917.3,176.4 904.3,166.7 909.2,182.9"/>
+<polygon data-k="26" fill="#6a3d23" points="836.3,179.7 847.6,170.0 846.0,182.9"/>
+<polygon data-k="27" fill="#4b2711" points="850.8,158.6 847.6,170.0 850.8,170.0"/>
+<polygon data-k="28" fill="#552413" points="847.6,170.0 846.0,182.9 850.8,170.0"/>
+<polygon data-k="29" fill="#4f1b07" points="846.0,182.9 849.2,182.9 850.8,170.0"/>
+<polygon data-k="30" fill="#3a1a09" points="904.3,166.7 888.1,174.8 909.2,182.9"/>
+<polygon data-k="31" fill="#673213" points="888.1,174.8 902.7,195.9 909.2,182.9"/>
+<polygon data-k="32" fill="#7a3b15" points="888.1,174.8 876.8,179.7 902.7,195.9"/>
+<polygon data-k="33" fill="#74421d" points="888.1,174.8 873.5,165.1 876.8,179.7"/>
+<polygon data-k="34" fill="#b56a28" points="873.5,165.1 860.6,173.2 876.8,179.7"/>
+<polygon data-k="35" fill="#ba743b" points="860.6,173.2 870.3,189.4 876.8,179.7"/>
+<polygon data-k="36" fill="#894e22" points="860.6,173.2 850.8,170.0 849.2,182.9"/>
+<polygon data-k="37" fill="#d8934c" points="860.6,173.2 849.2,182.9 870.3,189.4"/>
+<polygon data-k="38" fill="#b88047" points="849.2,182.9 842.7,192.6 870.3,189.4"/>
+<polygon data-k="39" fill="#873e0c" points="876.8,179.7 870.3,189.4 883.2,200.7"/>
+<polygon data-k="40" fill="#7d350c" points="902.7,195.9 876.8,179.7 883.2,200.7"/>
+<polygon data-k="41" fill="#7e3510" points="902.7,195.9 883.2,200.7 893.0,205.6"/>
+<polygon data-k="42" fill="#b16a2e" points="870.3,189.4 847.6,192.6 883.2,200.7"/>
+<polygon data-k="43" fill="#b97e40" points="870.3,189.4 842.7,192.6 847.6,192.6"/>
+<polygon data-k="44" fill="#6d4f33" points="842.7,192.6 836.3,200.7 847.6,192.6"/>
+<polygon data-k="45" fill="#874f23" points="883.2,200.7 847.6,192.6 862.2,199.1"/>
+<polygon data-k="46" fill="#a87f4e" points="847.6,192.6 836.3,200.7 862.2,199.1"/>
+<polygon data-k="47" fill="#64371c" points="862.2,199.1 836.3,200.7 837.9,210.5"/>
+<polygon data-k="48" fill="#482512" points="862.2,199.1 837.9,210.5 860.6,220.2"/>
+<polygon data-k="49" fill="#723913" points="883.2,200.7 862.2,199.1 876.8,215.3"/>
+<polygon data-k="50" fill="#522b12" points="862.2,199.1 860.6,220.2 876.8,215.3"/>
+<polygon data-k="51" fill="#381504" points="893.0,205.6 883.2,200.7 876.8,215.3"/>
+<polygon data-k="52" fill="#270b01" points="893.0,205.6 876.8,215.3 891.3,212.1"/>
+<polygon data-k="53" fill="#521f07" points="909.2,182.9 902.7,195.9 914.0,205.6"/>
+<polygon data-k="54" fill="#67280f" points="902.7,195.9 893.0,205.6 914.0,205.6"/>
+<polygon data-k="55" fill="#3f1305" points="893.0,205.6 891.3,212.1 914.0,205.6"/>
+<polygon data-k="56" fill="#411304" points="914.0,205.6 891.3,212.1 915.6,225.0"/>
+<polygon data-k="57" fill="#240a02" points="891.3,212.1 902.7,238.0 915.6,225.0"/>
+<polygon data-k="58" fill="#210902" points="891.3,212.1 876.8,215.3 902.7,238.0"/>
+<polygon data-k="59" fill="#270f05" points="876.8,215.3 880.0,241.2 902.7,238.0"/>
+<polygon data-k="60" fill="#2c110a" points="876.8,215.3 860.6,220.2 880.0,241.2"/>
+<polygon data-k="61" fill="#3a0f0a" points="860.6,220.2 862.2,229.9 880.0,241.2"/>
+<polygon data-k="62" fill="#481806" points="931.8,186.2 909.2,182.9 914.0,205.6"/>
+<polygon data-k="63" fill="#86350f" points="931.8,186.2 914.0,205.6 944.8,212.1"/>
+<polygon data-k="64" fill="#511706" points="944.8,212.1 914.0,205.6 915.6,225.0"/>
+<polygon data-k="65" fill="#512410" points="917.3,176.4 931.8,186.2 909.2,182.9"/>
+<polygon data-x="nose" fill="#2a0f07" points="858.6,197.4 861.2,196.6 863.3,198.1 864.1,200.8 861.4,201.2 859.0,200.2"/>
+<polygon data-x="noseFar" fill="#2a0f07" points="840.5,196.1 841.7,195.5 842.8,196.1 843.4,197.3 842.1,197.7 840.9,197.3"/>
+<polygon data-x="eyeL" fill="#120402" points="881.7,173.4 885.9,171.2 890.9,172.7 894.5,176.3 889.8,177.8 884.5,177.1"/>
+<polygon data-x="eyeR" fill="#120402" points="856.2,173.6 858.4,171.2 861.9,171.1 864.9,172.8 862.3,174.9 858.8,175.6"/>
+<polygon data-x="irisL" fill="#5a1208" points="884.0,173.9 886.7,172.6 889.9,173.5 892.2,175.7 889.2,176.7 885.8,176.3"/>
+<polygon data-x="irisR" fill="#4a0f07" points="857.8,173.5 859.2,172.0 861.4,171.9 863.3,172.9 861.6,174.2 859.4,174.6"/>
+<g class="bh-eyes"><ellipse class="bh-glow" cx="888.1" cy="174.8" rx="15.0" ry="9.5" fill="url(#eyeGlow)" opacity="0.78"/><ellipse class="bh-eye" cx="888.1" cy="174.8" rx="2.7" ry="1.4" fill="#ff5a30" opacity="1.00"/><ellipse class="bh-glow" cx="860.6" cy="173.2" rx="9.3" ry="5.9" fill="url(#eyeGlow)" opacity="0.48"/><ellipse class="bh-eye" cx="860.6" cy="173.2" rx="1.7" ry="0.9" fill="#ff5a30" opacity="0.59"/></g></g>
+</svg>
+<svg class="bull-head bull-light" viewBox="262 246 230 220" aria-hidden="true" focusable="false">
+<defs><filter id="blLift" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="blRim" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.1"/></filter><linearGradient id="blRimGrad" gradientUnits="userSpaceOnUse" x1="0" y1="262" x2="0" y2="452"><stop offset="0" stop-color="#ffc48e" stop-opacity=".4"/><stop offset=".45" stop-color="#ffb070" stop-opacity=".2"/><stop offset="1" stop-color="#ff9a50" stop-opacity=".03"/></linearGradient></defs>
+<polygon class="bl-lift" fill="#b98253" opacity=".27" filter="url(#blLift)" points="396.0,266.0 387.0,279.0 391.0,297.0 404.0,295.0 420.0,292.0 438.0,295.0 452.0,300.0 461.0,290.0 458.0,276.0 449.0,289.0 448.0,306.0 445.0,318.0 450.0,326.0 447.0,336.0 434.0,341.0 422.0,339.0 413.0,346.0 416.0,360.0 420.0,380.0 418.0,405.0 414.0,428.0 408.0,446.0 398.0,448.0 394.0,428.0 394.0,405.0 388.0,398.0 382.0,424.0 378.0,447.0 369.0,449.0 365.0,424.0 364.0,400.0 352.0,404.0 344.0,436.0 338.0,452.0 323.0,452.0 319.0,436.0 326.0,406.0 334.0,392.0 320.0,392.0 308.0,412.0 302.0,436.0 298.0,450.0 286.0,450.0 286.0,428.0 292.0,404.0 294.0,388.0 290.0,380.0 297.0,364.0 307.0,352.0 323.0,341.0 340.0,332.0 362.0,325.0 386.0,318.0 392.0,308.0 383.0,309.0 381.0,303.0 392.0,299.0"/>
+<polygon class="bl-rim" fill="none" stroke="url(#blRimGrad)" stroke-width="2" stroke-linejoin="round" filter="url(#blRim)" points="396.0,266.0 387.0,279.0 391.0,297.0 404.0,295.0 420.0,292.0 438.0,295.0 452.0,300.0 461.0,290.0 458.0,276.0 449.0,289.0 448.0,306.0 445.0,318.0 450.0,326.0 447.0,336.0 434.0,341.0 422.0,339.0 413.0,346.0 416.0,360.0 420.0,380.0 418.0,405.0 414.0,428.0 408.0,446.0 398.0,448.0 394.0,428.0 394.0,405.0 388.0,398.0 382.0,424.0 378.0,447.0 369.0,449.0 365.0,424.0 364.0,400.0 352.0,404.0 344.0,436.0 338.0,452.0 323.0,452.0 319.0,436.0 326.0,406.0 334.0,392.0 320.0,392.0 308.0,412.0 302.0,436.0 298.0,450.0 286.0,450.0 286.0,428.0 292.0,404.0 294.0,388.0 290.0,380.0 297.0,364.0 307.0,352.0 323.0,341.0 340.0,332.0 362.0,325.0 386.0,318.0 392.0,308.0 383.0,309.0 381.0,303.0 392.0,299.0"/>
+</svg>
+<svg class="bull-head bull-tall" viewBox="380 260 100 100" aria-hidden="true" focusable="false">
+<defs><radialGradient id="eyeGlow"><stop offset="0" stop-color="#ff6a3a" stop-opacity=".72"/><stop offset=".3" stop-color="#e8220e" stop-opacity=".4"/><stop offset=".7" stop-color="#c01008" stop-opacity=".08"/><stop offset="1" stop-color="#c01008" stop-opacity="0"/></radialGradient></defs>
+<g class="bh-head"><g class="bh-eyes"><ellipse class="bh-glow" cx="415.0" cy="311.0" rx="11.7" ry="7.4" fill="url(#eyeGlow)" opacity="0.61"/><ellipse class="bh-eye" cx="415.0" cy="311.0" rx="2.1" ry="1.1" fill="#ff5a30" opacity="0.74"/><ellipse class="bh-glow" cx="432.0" cy="310.0" rx="7.5" ry="4.8" fill="url(#eyeGlow)" opacity="0.39"/><ellipse class="bh-eye" cx="432.0" cy="310.0" rx="1.4" ry="0.7" fill="#ff5a30" opacity="0.47"/></g></g>
+</svg>
+<!-- bull:end -->
+    <span class="beam" id="beam"></span>
+  </div>
+  <div class="fog fog-1"></div><div class="fog fog-2"></div><div class="fog fog-3"></div>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+</div>
+
+<div class="win" id="win">
+  <!-- 2009 window chrome (light mode only) -->
+  <div class="win-title" aria-hidden="true">
+    <span class="win-title-text">The Bitcoin Bull</span>
+    <span class="win-btns"><button tabindex="-1" class="wb wb-min" data-egg="min" aria-label="Minimize"></button><button tabindex="-1" class="wb wb-max" data-egg="max" aria-label="Maximize"></button><button tabindex="-1" class="wb wb-close" data-action="theme-dark" aria-label="Close (back to night mode)"></button></span>
+  </div>
+  <nav class="menubar" aria-label="Menu">
+    <div class="menu"><button class="menu-btn" aria-haspopup="true">File</button>
+      <div class="menu-list" role="menu"><button role="menuitem" data-href="#/story">Story…</button><hr><button role="menuitem" data-action="theme-dark">Exit</button></div></div>
+    <div class="menu"><button class="menu-btn" aria-haspopup="true">Options</button>
+      <div class="menu-list" role="menu"><button role="menuitem" data-egg="generate"><span class="gen-tick"></span>Generate Coins</button><hr><button role="menuitem" data-ext="https://tbbtimemachine.xyz">TBB Time Machine ↗</button><button role="menuitem" data-action="copy-ca">Copy contract address</button></div></div>
+    <div class="menu"><button class="menu-btn" aria-haspopup="true">Help</button>
+      <div class="menu-list" role="menu"><button role="menuitem" data-href="#/help">Help…</button><button role="menuitem" data-href="#/learn">Learn…</button><hr><button role="menuitem" data-egg="about">About The Bitcoin Bull…</button></div></div>
+  </nav>
+  <div class="toolbar">
+    <a class="tool" href="#/chat/general"><span class="tool-ico tool-chat"></span>Chat</a>
+    <a class="tool" href="#/build"><span class="tool-ico tool-build"></span>Build</a>
+  </div>
+
+  <!-- One screen: the art stays the backdrop; the numbers sit beside the bull; everything longer lives in a drawer (the dock at the bottom). -->
+  <main id="main" class="home" tabindex="-1">
+    <div class="announce" id="banner" role="status" hidden><span class="announce-ico" aria-hidden="true"></span><span class="announce-text"></span></div>
+    <header class="top">
+      <div class="brand">
+        <h1 class="wordmark" id="wordmark">The Bitcoin Bull</h1>
+        <button class="ca" data-action="copy-ca" aria-label="Copy contract address">
+          <span class="ca-label">CA</span><span class="ca-val mono">42cX…pump</span><span class="ca-ico"></span>
+        </button>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="themeBtn" aria-label="Switch theme"></button>
+        <button class="account-btn" id="accountBtn" hidden><span class="account-ico"></span><span class="account-label">Sign in</span></button>
+      </div>
+    </header>
+
+    <section class="hero" aria-label="$TBB market">
+      <div class="hero-copy">
+        <p class="kicker" id="kicker">Read-only community dashboard. Never asks for your wallet, a signature or money.</p>
+        <div class="stats">
+          <div class="stat stat-price" id="st-price"><span class="stat-k">Price</span><span class="stat-v mono">—</span><span class="stat-age" data-feed="market"></span></div>
+          <div class="stat stat-chg" id="st-24h"><span class="stat-k">24h</span><span class="stat-v mono">—</span></div>
+        </div>
+        <p class="stat-sub mono" id="st-sub" hidden></p>
+        <svg class="spark" id="spark" viewBox="0 0 240 48" preserveAspectRatio="none" role="img" aria-label="Price, last 24 hours"><path class="spark-area" d=""/><path class="spark-line" d=""/></svg>
+        <span class="stat-age spark-age" data-feed="chart" data-label="24h chart"></span>
+        <p class="panel-age" id="panelAge" hidden></p>
+        <div class="stats stats-mini">
+          <div class="stat" id="st-holders" hidden><span class="stat-k">Holders</span><span class="stat-v mono">—</span><span class="stat-age" data-feed="holders"></span></div>
+          <div class="stat stat-staked" id="st-staked"><span class="stat-k">TBB staked</span><span class="stat-v mono">—</span><span class="stat-d mono" id="st-staked-d"></span><span class="stat-age" data-feed="staked"></span></div>
+          <a class="stat stat-link stat-season" id="st-season" href="https://tbb-buyer-board.garden-equity-field-0042.workers.dev/" target="_blank" rel="noopener noreferrer" aria-label="Season 1 competition. Opens the creator’s board"><span class="stat-k">Season 1</span><span class="stat-v mono">—</span><span class="stat-d mono" id="st-season-d"></span><span class="stat-age" data-feed="season"></span></a>
+        </div>
+        <div class="hero-actions">
+          <a class="btn btn-primary hero-btn" href="#/learn" data-k="learn"><span data-i="learn"></span>Learn</a>
+          <button class="btn hero-btn" id="shareBtn" type="button" aria-label="Share today’s line"><span data-i="share"></span>Share</button>
+        </div>
+        <a class="alert" id="alert" href="#/build" hidden><span class="alert-dot"></span><span class="alert-text"></span></a>
+      </div>
+    </section>
+
+    <!-- the 2009 skin's list view (hidden in the night look, where the dock below is the only navigation) -->
+    <nav class="tiles" aria-label="Places">
+      <a class="tile tile-learn" href="#/learn" data-k="learn"><span class="t-status">Read</span><span class="t-date"></span><span class="t-ico" data-i="learn"></span><span class="t-main"><span class="t-label">Learn</span><span class="t-sub">Bitcoin, Solana and $TBB, plainly</span></span></a>
+      <a class="tile" href="#/help" data-k="help"><span class="t-status">Read</span><span class="t-date"></span><span class="t-ico" data-i="help"></span><span class="t-main"><span class="t-label">Help</span><span class="t-sub">Safety and how things work</span></span></a>
+    </nav>
+
+    <button class="lore" id="lore" aria-live="polite"><span class="lore-text">The Times 03/Jan/2009 Chancellor on brink of second bailout for banks</span><span class="lore-meta"></span></button>
+
+    <!-- the dock is the navigation: drawers (Story, Links, Season 1, Chat) and the Learn sheet. Build and Chat are hidden
+         while closed; the server's switches bring each tab back without a page change. -->
+    <nav class="dock" aria-label="Sections">
+      <a class="dk" href="#/story" data-dk="story"><span data-i="book"></span><span class="dk-label">Story</span></a>
+      <a class="dk" href="#/links" data-dk="links"><span data-i="link"></span><span class="dk-label">Links</span></a>
+      <a class="dk" href="#/season" data-dk="season"><span data-i="star"></span><span class="dk-label">Season 1</span></a>
+      <a class="dk" href="#/learn" data-dk="learn"><span data-i="learn"></span><span class="dk-label">Learn</span></a>
+      <a class="dk dk-build" href="#/build" data-dk="build" hidden><span data-i="bolt"></span><span class="dk-label">Build</span></a>
+      <a class="dk" href="#/live" data-dk="live" hidden><span data-i="chat"></span><span class="dk-label">Chat</span></a>
+    </nav>
+    <div class="footline">
+      <p class="fine">Not financial advice. Community-made, not by the $TBB developer. Never share your seed phrase; nobody from this site will DM you first. <a href="#/disclaimer">Disclaimer</a></p>
+      <p class="llc" id="llc">© 2026 · community-made page</p>
+    </div>
+  </main>
+
+  <div class="statusbar" aria-hidden="true">
+    <span class="sb" id="sb-blocks">— blocks</span><span class="sb sb-wide" id="sb-text">running bitcoin</span>
+  </div>
+</div>
+
+<!-- Drawers: the long things (story, links, Season 1 leaders, live chat) slide up from the dock. One hash route each. -->
+<div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+<section class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden>
+  <div class="drawer-grip" aria-hidden="true"></div>
+  <header class="drawer-head">
+    <h2 class="drawer-title" id="drawerTitle">Story</h2>
+    <div class="drawer-tools" id="drawerTools"></div>
+    <button class="icon-btn drawer-close" id="drawerClose" aria-label="Close"></button>
+  </header>
+  <div class="drawer-body" id="drawerBody">
+    <section class="dw dw-story" data-dw="story" aria-label="Story" hidden>
+      <h3 class="story-title" id="storyTitle" hidden></h3>
+      <div class="story" id="storyBody"><p>The story is coming.</p></div>
+    </section>
+    <section class="dw dw-links" data-dw="links" aria-label="Links" hidden>
+      <div class="places">
+        <div class="board-head links-head"><span class="board-title">Links</span><a class="link small" href="#/allies">All →</a></div>
+        <a class="tile link-row tile-season" href="https://tbb-buyer-board.garden-equity-field-0042.workers.dev/" target="_blank" rel="noopener noreferrer" data-k="season"><span class="t-status">Live ↗</span><span class="t-date"></span><span class="t-ico" data-i="star"></span><span class="t-main"><span class="t-label">Season 1</span><span class="t-sub">The creator’s on-chain competition</span></span></a>
+        <div class="links-list" id="linksList"><div class="tile link-row link-skel" aria-hidden="true"><span class="t-ico"></span><span class="t-main"><span class="t-label">&nbsp;</span><span class="t-sub">&nbsp;</span></span></div><div class="tile link-row link-skel" aria-hidden="true"><span class="t-ico"></span><span class="t-main"><span class="t-label">&nbsp;</span><span class="t-sub">&nbsp;</span></span></div><div class="tile link-row link-skel" aria-hidden="true"><span class="t-ico"></span><span class="t-main"><span class="t-label">&nbsp;</span><span class="t-sub">&nbsp;</span></span></div><div class="tile link-row link-skel" aria-hidden="true"><span class="t-ico"></span><span class="t-main"><span class="t-label">&nbsp;</span><span class="t-sub">&nbsp;</span></span></div><div class="tile link-row link-skel" aria-hidden="true"><span class="t-ico"></span><span class="t-main"><span class="t-label">&nbsp;</span><span class="t-sub">&nbsp;</span></span></div></div>
+      </div>
+      <section class="disclaimer" aria-label="Disclaimer"><strong>Disclaimer.</strong> This is a community information dashboard. Nothing here is financial, investment, legal or tax advice, or an offer to buy or sell anything. $TBB is a meme token with no promise of value or return; crypto is volatile and you can lose everything you put in. Prices, staking totals and other numbers come from public sources and may be late or wrong. Links go to third-party sites we don’t control. Do your own research and only risk what you can afford to lose. <a href="#/disclaimer">Read the full disclaimer</a>.</section>
+      <p class="community-note"><strong>Community-made.</strong> This page was made by members of the $TBB community. It is not made, run or endorsed by the $TBB developer.</p>
+    </section>
+    <section class="dw dw-season" data-dw="season" aria-label="Season 1 leaders" hidden>
+      <section class="season-card">
+        <div class="board-head">
+          <div class="board-title"><span data-i="star" class="ic-or"></span><span>Season 1 leaders</span></div>
+          <a class="board-open" id="seasonOpen" href="https://tbb-buyer-board.garden-equity-field-0042.workers.dev/" target="_blank" rel="noopener noreferrer">Open the board <span class="arrow">↗</span></a>
+        </div>
+        <ol class="season-top" id="seasonTop"><li class="st-skel" aria-hidden="true"><span class="st-rank mono">&nbsp;</span><span class="st-who mono">&nbsp;</span><span class="st-score mono">&nbsp;</span></li><li class="st-skel" aria-hidden="true"><span class="st-rank mono">&nbsp;</span><span class="st-who mono">&nbsp;</span><span class="st-score mono">&nbsp;</span></li><li class="st-skel" aria-hidden="true"><span class="st-rank mono">&nbsp;</span><span class="st-who mono">&nbsp;</span><span class="st-score mono">&nbsp;</span></li></ol>
+        <p class="season-sub" id="seasonSub">Ranked by net USD bought, on the creator’s board.</p>
+        <p class="season-sub season-prize" id="seasonPrize" hidden></p>
+      </section>
+    </section>
+    <section class="dw dw-live" data-dw="live" aria-label="Live chat" hidden>
+      <section class="board is-closed" aria-label="Live chat">
+        <div class="board-head">
+          <div class="board-title"><span class="live-dot"></span><span>Live Chat</span></div>
+          <a class="board-open" id="boardOpen" href="#/chat/general">Open chat <span class="arrow">→</span></a>
+        </div>
+        <div class="chips" id="boardChips" role="tablist" aria-label="Rooms">
+          <button class="chip" role="tab" data-room="general" aria-selected="true">Main</button>
+          <button class="chip" role="tab" data-room="builds" aria-selected="false">Builds</button>
+        </div>
+        <ol class="board-list" id="boardList" hidden></ol>
+        <a class="board-compose" id="boardCompose" href="#/chat/general" hidden><span>Write a message…</span></a>
+        <div class="board-soon" id="boardSoon"><span class="soon-lock" data-i="shield"></span><strong>Chat and Ideas are coming soon</strong></div>
+      </section>
+      <section class="ideas-card is-closed" aria-label="Ideas" hidden>
+        <div class="board-head">
+          <div class="board-title"><span data-i="bolt" class="ic-or"></span><span class="board-title-text">Ideas</span></div>
+          <a class="board-open" href="#/build/ideas">All ideas <span class="arrow">→</span></a>
+        </div>
+        <p class="ideas-sub" id="ideasSub" hidden>The herd votes every week. Top ideas rise.</p>
+        <div class="board-soon" id="ideasSoon"><span class="soon-lock" data-i="bolt"></span><strong>Ideas are coming soon</strong></div>
+        <ol class="ideas-list" id="topIdeas" hidden></ol>
+        <a class="btn btn-sm ideas-post" href="#/build/ideas" data-k="build" hidden><span data-i="plus"></span>Post an idea</a>
+      </section>
+    </section>
+  </div>
+</section>
+
+<!-- Views open here: a glass sheet (dark) / a child window (light). -->
+<div class="sheet-backdrop" id="backdrop" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <header class="sheet-head">
+    <button class="icon-btn sheet-back" id="sheetBack" aria-label="Back"></button>
+    <h2 class="sheet-title" id="sheetTitle"></h2>
+    <div class="sheet-tools" id="sheetTools"></div>
+    <button class="icon-btn sheet-close" id="sheetClose" aria-label="Close"></button>
+  </header>
+  <div class="sheet-body" id="sheetBody"></div>
+</section>
+
+<div class="modal-host" id="modal"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="embers" id="embers" aria-hidden="true"></div>
+</body>
+</html>

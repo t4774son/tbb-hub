@@ -1,0 +1,16 @@
+{
+  "name": "tbb-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Bitcoin Bull ($TBB) community dashboard. Read-only: nothing to connect, nothing to buy. Zero runtime dependencies.",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test test/unit/*.test.js",
+    "test:e2e": "node test/e2e/run.js",
+    "test:net": "node --test test/net/*.test.js",
+    "shots": "node scripts/shots.js"
+  }
+}

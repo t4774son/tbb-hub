@@ -1,0 +1,13 @@
+# never commit secrets, data or local captures
+.env
+.env.*
+!.env.example
+data/
+uploads/
+*.db
+*.db-*
+shots/
+node_modules/
+dist/
+.DS_Store
+.privacy-*
